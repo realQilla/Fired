@@ -1,16 +1,18 @@
 package net.qilla.fired.weapon.gun.implementation;
 
 import net.kyori.adventure.text.Component;
-import net.qilla.fired.weapon.WeaponClass;
+import net.qilla.fired.weapon.Rarity;
+import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.GunType;
-import net.qilla.qlibrary.util.particle.QParticle;
-import net.qilla.qlibrary.util.sound.QSound;
+import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.qlibrary.util.QSound;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,13 +24,13 @@ public interface Gun {
 
     boolean fire(@NotNull Player holder, @NotNull Location loc, @NotNull ItemStack gunItem);
 
-    void hitBlock(@NotNull Player shooter, @NotNull Block block, @NotNull Location loc);
+    void hitBlock(@NotNull Player shooter, @NotNull Block block, @NotNull Vector hitVec);
 
-    void hitEntity(@NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Location loc);
+    void hitEntity(@NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec);
 
-    boolean attemptReload(@NotNull Player holder, @Nullable Magazine magazine, @NotNull ItemStack magazineItem);
+    boolean attemptLoad(@NotNull Player holder, @NotNull ItemStack gunItem, @NotNull ItemStack magazineItem, @Nullable Magazine magazine);
 
-    boolean reload(@NotNull Player holder, @NotNull Magazine magazine, @NotNull ItemStack magItem);
+    boolean load(@NotNull Player holder, @NotNull ItemStack gunItem, @NotNull ItemStack magazineItem, @NotNull Magazine magazine);
 
     @Nullable Magazine getMagazine();
 
@@ -36,9 +38,11 @@ public interface Gun {
 
     @NotNull String getUUID();
 
+    @NotNull Rarity getRarity();
+
     @NotNull Component getName();
 
-    @NotNull List<Component> getLore();
+    @NotNull List<Component> buildLore();
 
     @NotNull ItemStack getItem();
 
@@ -46,17 +50,13 @@ public interface Gun {
 
     @NotNull GunType<?> getType();
 
-    @NotNull WeaponClass getWeaponClass();
+    @NotNull BulletClass getBulletClass();
 
     float getDamage();
 
-    float getAccuracy();
-
     int getFireCD();
 
-    @NotNull List<Component> getStats();
-
-    @NotNull QParticle getFireParticle();
+    @NotNull StatDisplay buildStats();
 
     @NotNull QSound getFireSound();
 

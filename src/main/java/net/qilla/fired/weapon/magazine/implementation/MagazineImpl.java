@@ -8,12 +8,14 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
-import net.qilla.fired.weapon.WeaponClass;
+import net.qilla.fired.weapon.Rarity;
+import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletRegistry;
 import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import net.qilla.qlibrary.items.QStack;
-import net.qilla.qlibrary.util.sound.QSound;
+import net.qilla.qlibrary.util.QSound;
+import net.qilla.qlibrary.util.tools.NumUtil;
 import net.qilla.qlibrary.util.tools.PlayerUtil;
 import net.qilla.qlibrary.util.tools.QRunnable;
 import net.qilla.qlibrary.util.tools.QTask;
@@ -32,18 +34,19 @@ public abstract class MagazineImpl implements Magazine {
 
     private static final Plugin PLUGIN = Fired.getInstance();
     private static final BulletRegistry BULLET_REGISTRY = BulletRegistry.getInstance();
-    private static final Random RANDOM = new Random();
 
-    private static final QSound LOAD_ROUND = QSound.of(Sound.BLOCK_BAMBOO_PLACE, 0.5f, 2, SoundCategory.PLAYERS);
-    private static final QSound COMPLETE_LOAD = QSound.of(Sound.ENTITY_ARMADILLO_EAT, 0.5f, 2, SoundCategory.PLAYERS);
+    private static final QSound LOAD_ROUND = QSound.of(Sound.BLOCK_COPPER_BULB_TURN_ON, 2.0f, 0.85f, SoundCategory.PLAYERS);
+    private static final QSound COMPLETE_LOAD = QSound.of(Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1.5f, 0.33f, SoundCategory.PLAYERS);
 
     private final String uuid;
     private final MagazineType<?> magazineType;
-    private final WeaponClass weaponClass;
+    private final BulletClass bulletClass;
     private final int capacity;
     private final long reloadSpeed;
     private final Queue<Bullet> queuedBullets;
     private final Deque<Bullet> loadedBullets;
+
+    private final Rarity rarity;
     private final Component name;
     private final List<Component> lore;
     private final ItemStack itemStack;
@@ -51,11 +54,13 @@ public abstract class MagazineImpl implements Magazine {
     public MagazineImpl(@NotNull MagazineType<?> magazineType, @NotNull MagazineImpl.Factory factory) {
         this.uuid = UUID.randomUUID().toString();
         this.magazineType = magazineType;
-        this.weaponClass = factory.weaponClass;
+        this.bulletClass = factory.bulletClass;
         this.capacity = factory.capacity;
         this.reloadSpeed = factory.reloadSpeed;
         this.loadedBullets = factory.bullets;
         this.queuedBullets = new LinkedList<>();
+
+        this.rarity = factory.rarity;
         this.name = factory.name;
         this.lore = factory.lore;
         this.itemStack = factory.itemStack;
@@ -68,7 +73,7 @@ public abstract class MagazineImpl implements Magazine {
 
     @Override
     public boolean attemptLoad(@NotNull Player player, @NotNull ItemStack magItem, @NotNull ItemStack bulletItem) {
-        if(bulletItem.isEmpty() || this.isFull() || !this.queuedBullets.isEmpty()) return false;
+        if(bulletItem.isEmpty() || this.isMagazineFull() || !this.queuedBullets.isEmpty()) return false;
 
         PersistentDataContainerView bulletPDC = bulletItem.getPersistentDataContainer();
 
@@ -78,9 +83,9 @@ public abstract class MagazineImpl implements Magazine {
 
         Bullet bullet = BULLET_REGISTRY.get(bulletID);
 
-        if(bullet == null || this.weaponClass != bullet.getWeaponClass()) return false;
+        if(bullet == null || this.bulletClass != bullet.getBulletClass()) return false;
 
-        int couldFit = this.capacity - (this.getLoaded() + this.getQueued());
+        int couldFit = this.capacity - (this.getLoadedBulletsSize() + this.getQueuedBulletsSize());
         int itemAmount = bulletItem.getAmount();
         int usedAmount = Math.min(itemAmount, couldFit);
 
@@ -90,38 +95,38 @@ public abstract class MagazineImpl implements Magazine {
             this.queuedBullets.add(bullet);
         }
 
+        MagazineImpl.this.updateItem(magItem);
         this.load(player, magItem);
         return true;
     }
 
     @Override
     public void load(@NotNull Player player, @NotNull ItemStack magItem) {
-        if(this.isFull()) return;
-
         new QRunnable(new QTask() {
             @Override
             public void run() {
-                if(magItem.isEmpty() || !Objects.equals(player.getInventory().getItemInMainHand().getPersistentDataContainer().get(NKey.MAGAZINE, PersistentDataType.STRING), MagazineImpl.this.uuid)) {
+                if(magItem.isEmpty() || MagazineImpl.this.isMagazineFull() || !Objects.equals(player.getInventory().getItemInMainHand().getPersistentDataContainer().get(NKey.MAGAZINE, PersistentDataType.STRING), MagazineImpl.this.uuid)) {
                     cancel();
                     return;
                 }
 
                 Bullet bullet = MagazineImpl.this.queuedBullets.poll();
                 MagazineImpl.this.loadedBullets.push(bullet);
-                PlayerUtil.sound(player, MagazineImpl.LOAD_ROUND, true);
+                PlayerUtil.Sound.loc(player, MagazineImpl.LOAD_ROUND, 0.2f);
                 MagazineImpl.this.updateItem(magItem);
 
-                if(MagazineImpl.this.queuedBullets.isEmpty() || (MagazineImpl.this.isFull())) {
-                    PlayerUtil.sound(player, MagazineImpl.COMPLETE_LOAD, true);
+                if(MagazineImpl.this.queuedBullets.isEmpty()) {
+                    PlayerUtil.Sound.loc(player, MagazineImpl.COMPLETE_LOAD, 0.2f);
                     cancel();
+                    return;
                 }
             }
-        }, this.capacity).runSync(PLUGIN, Executors.newSingleThreadScheduledExecutor(),0, this.reloadSpeed, TimeUnit.MILLISECONDS);
+        }, this.capacity).runSync(PLUGIN, Executors.newSingleThreadScheduledExecutor(),250, this.reloadSpeed, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public @Nullable Bullet unload() {
-        if(this.isEmpty()) return null;
+    public @Nullable Bullet pullBullet() {
+        if(this.isMagazineEmpty()) return null;
 
         return this.loadedBullets.pop();
     }
@@ -137,7 +142,7 @@ public abstract class MagazineImpl implements Magazine {
     }
 
     @Override
-    public @Nullable Bullet getNext() {
+    public @Nullable Bullet viewNextBullet() {
         return this.loadedBullets.peek();
     }
 
@@ -147,8 +152,8 @@ public abstract class MagazineImpl implements Magazine {
     }
 
     @Override
-    public @NotNull WeaponClass getWeaponClass() {
-        return this.weaponClass;
+    public @NotNull BulletClass getBulletClass() {
+        return this.bulletClass;
     }
 
     @Override
@@ -157,28 +162,33 @@ public abstract class MagazineImpl implements Magazine {
     }
 
     @Override
-    public int getLoaded() {
+    public int getLoadedBulletsSize() {
         return this.loadedBullets.size();
     }
 
     @Override
-    public int getQueued() {
+    public int getQueuedBulletsSize() {
         return this.queuedBullets.size();
     }
 
     @Override
-    public boolean isFull() {
-        return this.getLoaded() >= this.capacity;
+    public boolean isMagazineFull() {
+        return this.getLoadedBulletsSize() >= this.capacity;
     }
 
     @Override
-    public boolean hasQueued() {
+    public boolean hasQueuedBullets() {
         return !this.queuedBullets.isEmpty();
     }
 
     @Override
-    public boolean isEmpty() {
+    public boolean isMagazineEmpty() {
         return this.loadedBullets.isEmpty();
+    }
+
+    @Override
+    public @NotNull Rarity getRarity() {
+        return this.rarity;
     }
 
     @Override
@@ -190,29 +200,27 @@ public abstract class MagazineImpl implements Magazine {
     public @NotNull List<Component> getLore() {
         List<Component> lore = new ArrayList<>();
 
-        if(this.hasQueued()) {
+        if(this.hasQueuedBullets()) {
             lore.add(MiniMessage.miniMessage().deserialize("<!italic><gold><bold>LOADING REQUIRED</bold></gold>"));
-        }
-
-        if(this.isEmpty()) {
+        } else if(this.isMagazineEmpty()) {
             lore.add(MiniMessage.miniMessage().deserialize("<!italic><red><bold>EMPTY</red>"));
-        } else if(this.isFull()) {
+        } else if(this.isMagazineFull()) {
             lore.add(MiniMessage.miniMessage().deserialize("<!italic><green><bold>FULL</green>"));
         }
         lore.add(Component.empty());
 
-        lore.add(MiniMessage.miniMessage().deserialize("<!italic><white><gold>⚓ Capacity: </gold>" + this.getCapacity()));
+        lore.add(MiniMessage.miniMessage().deserialize("<!italic><white><gold>⚓ Capacity: </gold>" + NumUtil.numberComma(this.getCapacity())));
 
         lore.add(Component.empty());
 
         StringBuilder ammoLine = new StringBuilder("<!italic><white><yellow>\uD83E\uDEA3 Ammo</yellow>: ");
         String symbol = this.getCapacity() <= 8 ? "█" : this.getCapacity() <= 32 ? "▌" : "|";
 
-        String ammoColor = this.getLoaded() < (this.capacity / 4) ? "<red>" : "<white>";
+        String ammoColor = this.getLoadedBulletsSize() < (this.capacity / 4) ? "<red>" : "<white>";
 
         if(this.capacity > 40) {
-            int currentAmmoSymbols = this.getLoaded() % 40;
-            int remainingCapacity = this.getCapacity() - this.getLoaded();
+            int currentAmmoSymbols = this.getLoadedBulletsSize() % 40;
+            int remainingCapacity = this.getCapacity() - this.getLoadedBulletsSize();
             int maxAmmoSymbols = Math.min(40 - currentAmmoSymbols, remainingCapacity);
             int spaceFillerSymbols = 40 - currentAmmoSymbols - maxAmmoSymbols;
 
@@ -222,10 +230,10 @@ public abstract class MagazineImpl implements Magazine {
 
             ammoLine.append(ammoColor).append(curAmmo).append("<dark_gray>").append(maxAmmo).append("</dark_gray><dark_red>")
                     .append(spaceFiller).append("</dark_red> ")
-                    .append(this.getLoaded() / 40).append("/").append(this.capacity / 40);
+                    .append(this.getLoadedBulletsSize() / 40).append("/").append(this.capacity / 40);
         } else {
-            String curAmmo = new StringBuilder().repeat(symbol, this.getLoaded()).toString();
-            String maxAmmo = new StringBuilder().repeat(symbol, this.getCapacity() - this.getLoaded()).toString();
+            String curAmmo = new StringBuilder().repeat(symbol, this.getLoadedBulletsSize()).toString();
+            String maxAmmo = new StringBuilder().repeat(symbol, this.getCapacity() - this.getLoadedBulletsSize()).toString();
 
             ammoLine.append(ammoColor).append(curAmmo).append("</white><dark_gray>").append(maxAmmo);;
         }
@@ -238,7 +246,7 @@ public abstract class MagazineImpl implements Magazine {
         }
 
         lore.add(Component.empty());
-        lore.add(MiniMessage.miniMessage().deserialize("<!italic><yellow>Right Click on weapon to load</yellow>"));
+        lore.add(this.rarity.display().append(Component.text(" MAGAZINE")));
 
         return lore;
     }
@@ -256,28 +264,32 @@ public abstract class MagazineImpl implements Magazine {
 
     public static final class Factory {
 
-        private WeaponClass weaponClass;
+        private BulletClass bulletClass;
         private int capacity;
         private long reloadSpeed;
         private Deque<Bullet> bullets;
+
+        private Rarity rarity;
         private Component name;
         private List<Component> lore;
         private ItemStack itemStack;
 
         public Factory() {
-            this.weaponClass = WeaponClass.PISTOL;
+            this.bulletClass = BulletClass.PISTOL;
             this.capacity = 20;
             this.reloadSpeed = 100;
             this.bullets = new LinkedList<>();
+
+            this.rarity = Rarity.COMMON_I;
             this.name = MiniMessage.miniMessage().deserialize("<!italic><blue>Magazine");
             this.lore = List.of();
             this.itemStack = QStack.ofClean(Material.NETHERITE_INGOT, Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, 1);
         }
 
-        public @NotNull Factory weaponClass(@NotNull WeaponClass weaponClass) {
-            Preconditions.checkNotNull(weaponClass, "Weapon Class cannot be null.");
+        public @NotNull Factory bulletClass(@NotNull BulletClass bulletClass) {
+            Preconditions.checkNotNull(bulletClass, "Weapon Class cannot be null.");
 
-            this.weaponClass = weaponClass;
+            this.bulletClass = bulletClass;
             return this;
         }
 
@@ -295,6 +307,13 @@ public abstract class MagazineImpl implements Magazine {
             Preconditions.checkNotNull(bullets, "Bullets cannot be null.");
 
             this.bullets = new LinkedList<>(bullets.subList(0, Math.min(bullets.size(), this.capacity)));
+            return this;
+        }
+
+        public @NotNull Factory rarity(@NotNull Rarity rarity) {
+            Preconditions.checkNotNull(rarity, "Rarity cannot be null.");
+
+            this.rarity = rarity;
             return this;
         }
 

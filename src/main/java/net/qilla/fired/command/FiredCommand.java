@@ -30,7 +30,6 @@ public final class FiredCommand {
     private static final String WEAPON = "weapon";
     private static final String MAGAZINE = "magazine";
     private static final String BULLET = "bullet";
-    private static final String GET = "get";
     private static final String SELECT = "select";
     private static final String AMOUNT = "amount";
 
@@ -46,11 +45,6 @@ public final class FiredCommand {
          * Weapon section
          */
         final LiteralArgumentBuilder<CommandSourceStack> weaponNode = Commands.literal(WEAPON);
-
-        /**
-         * Weapon obtainment argument
-         */
-        final LiteralArgumentBuilder<CommandSourceStack> getWeaponNode = Commands.literal(GET);
 
         /**
          * Weapon selection argument
@@ -76,11 +70,6 @@ public final class FiredCommand {
         final LiteralArgumentBuilder<CommandSourceStack> magazineNode = Commands.literal(MAGAZINE);
 
         /**
-         * Get magazine
-         */
-        final LiteralArgumentBuilder<CommandSourceStack> getMagazineNode = Commands.literal(GET);
-
-        /**
          * Magazine selection argument
          */
         final ArgumentCommandNode<CommandSourceStack, String> selectMagazineNode = Commands.argument(SELECT, StringArgumentType.word())
@@ -102,11 +91,6 @@ public final class FiredCommand {
          * Magazine section
          */
         final LiteralArgumentBuilder<CommandSourceStack> bulletNode = Commands.literal(BULLET);
-
-        /**
-         * Get magazine
-         */
-        final LiteralArgumentBuilder<CommandSourceStack> getBulletNode = Commands.literal(GET);
 
         /**
          * Magazine selection argument
@@ -133,17 +117,13 @@ public final class FiredCommand {
          */
         commands.register(commandNode.
                 then(weaponNode
-                        .then(getWeaponNode
-                                .then(selectWeaponNode)
-                        )
+                        .then(selectWeaponNode)
+
                 ).then(magazineNode
-                        .then(getMagazineNode
-                                .then(selectMagazineNode)
-                        )
+                        .then(selectMagazineNode)
+
                 ).then(bulletNode
-                        .then(getBulletNode
-                                .then(selectBulletNode)
-                        )
+                        .then(selectBulletNode)
                 )
                 .build());
     }
@@ -216,7 +196,7 @@ public final class FiredCommand {
             player.give(itemStack);
         }
 
-        player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Bullet(s) obtained successfully!"));
+        player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Bullet's obtained successfully!"));
         return Command.SINGLE_SUCCESS;
     }
 }

@@ -7,13 +7,20 @@ import io.papermc.paper.raytracing.RayTraceTarget;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
-import net.qilla.fired.weapon.WeaponClass;
+import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
+import net.qilla.fired.weapon.visualstats.Stat;
+import net.qilla.fired.weapon.visualstats.StatDisplay;
 import net.qilla.qlibrary.items.QStack;
-import net.qilla.qlibrary.util.particle.QParticle;
-import net.qilla.qlibrary.util.sound.QSound;
+import net.qilla.qlibrary.util.QParticle;
+import net.qilla.qlibrary.util.QSound;
 import net.qilla.qlibrary.util.tools.PlayerUtil;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -31,11 +38,13 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Predicate;
 
 public abstract class BulletImpl implements Bullet {
 
-    private static final java.util.Random RANDOM = new java.util.Random();
+    private static final Fired PLUGIN = Fired.getInstance();
+    private static final Random RANDOM = new java.util.Random();
     protected static final Predicate<Block> BLOCK_FILTER = block -> {
         if(block.isPassable()) return false;
         if(block.getType().getBlastResistance() <= 1) return false;
@@ -43,37 +52,36 @@ public abstract class BulletImpl implements Bullet {
     };
 
     private final String id;
-    private final WeaponClass weaponClass;
+    private final BulletClass bulletClass;
     private final int range;
+    private final double bulletSpread;
     private final float damage;
     private final float bleed;
     private final float scale;
 
     private final Component name;
-    private final List<Component> lore;
+    private final List<Component> description;
     private final ItemStack itemStack;
     private final QParticle trailParticle;
-    private final QParticle impactParticle;
-    private final QSound impactSound;
 
-    public BulletImpl(@NotNull String id, @NotNull BulletImpl.Factory factory) {
+    public BulletImpl(@NotNull String id, @NotNull Factory<?> factory) {
         this.id = id;
-        this.weaponClass = factory.weaponClass;
+        this.bulletClass = factory.bulletClass;
         this.range = factory.range;
+        this.bulletSpread = factory.bulletSpread;
         this.damage = factory.damage;
         this.bleed = factory.bleed;
         this.scale = factory.scale;
 
         this.name = factory.name;
-        this.lore = factory.lore;
+        this.description = factory.description;
         this.itemStack = factory.itemStack;
         this.trailParticle = factory.trailParticle;
-        this.impactParticle = factory.impactParticle;
-        this.impactSound = factory.impactSound;
     }
 
     @Override
-    public void fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull Vector dir, @NotNull Gun gun) {
+    public void fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull Vector originDir, @NotNull Gun gun) {
+        Vector dir = this.calcAimCone(originDir, this.bulletSpread);
         RayTraceResult result = originLoc.getWorld().rayTrace(builder -> builder
                 .start(originLoc)
                 .direction(dir)
@@ -85,51 +93,85 @@ public abstract class BulletImpl implements Bullet {
                 .entityFilter(entity -> entity instanceof LivingEntity && !entity.equals(shooter))
         );
 
-        this.fireParticle(originLoc, dir);
-
         if(result != null) {
-            Location hitLoc = result.getHitPosition().toLocation(originLoc.getWorld());
+            Vector hitLoc = result.getHitPosition();
             Entity entity = result.getHitEntity();
             Block block = result.getHitBlock();
 
             if(entity != null) this.hitEntity(gun, shooter, (LivingEntity) entity, hitLoc);
             if(block != null) this.hitBlock(gun, shooter, block, hitLoc);
         }
+        this.fireParticle(originLoc, dir);
+    }
+
+    public @NotNull Vector calcAimCone(@NotNull Vector originDir, double degrees) {
+        double theta = RANDOM.nextDouble() * 2 * Math.PI;
+        double phi = Math.acos(1 - RANDOM.nextDouble() * (1 - Math.cos(Math.toRadians(degrees))));
+
+        Vector perpendicular1 = originDir.clone().crossProduct(new Vector(1, 0, 0));
+        if (perpendicular1.lengthSquared() < 0.01) {
+            perpendicular1 = originDir.clone().crossProduct(new Vector(0, 1, 0));
+        }
+        perpendicular1.normalize();
+
+        Vector perpendicular2 = originDir.clone().crossProduct(perpendicular1).normalize();
+
+        double sinPhi = Math.sin(phi);
+        return originDir.clone().multiply(Math.cos(phi))
+                .add(perpendicular1.multiply(sinPhi * Math.cos(theta)))
+                .add(perpendicular2.multiply(sinPhi * Math.sin(theta))).normalize();
     }
 
     @Override
-    public void hitEntity(@NotNull Gun gun, @NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Location hitLoc) {
-        DamageSource source = DamageSource.builder(DamageType.MAGIC)
+    public void hitEntity(@NotNull Gun gun, @NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec) {
+        DamageSource source = DamageSource.builder(DamageType.GENERIC)
                 .withDirectEntity(shooter)
                 .withDamageLocation(shooter.getEyeLocation())
                 .build();
 
-        entity.damage(this.getDamage() + gun.getDamage(), source);
+
+        entity.damage(gun.getDamage() + this.getDamage(), source);
+        PLUGIN.getEntityDataReg().getOrCreate(entity).bleedEntity(this.bleed);
         entity.setNoDamageTicks(0);
-        gun.hitEntity(shooter, entity, hitLoc);
+        this.hitParticle(hitVec, entity.getWorld());
+        gun.hitEntity(shooter, entity, hitVec);
     }
 
     @Override
-    public void hitBlock(@NotNull Gun gun, @NotNull Player shooter, @NotNull Block block, @NotNull Location hitLoc) {
-        CraftWorld craftWorld = (CraftWorld) hitLoc.getWorld();
+    public void hitBlock(@NotNull Gun gun, @NotNull Player shooter, @NotNull Block block, @NotNull Vector hitVec) {
+        Location hitLoc = hitVec.toLocation(block.getWorld());
+        CraftWorld craftWorld = (CraftWorld) block.getWorld();
         BlockPos blockPos = new BlockPos(block.getX(), block.getY(), block.getZ());
 
         craftWorld.getHandle().getChunkSource().broadcastAndSend(((CraftPlayer) shooter).getHandle(), new ClientboundBlockDestructionPacket(block.hashCode(), blockPos, 5));
 
-        PlayerUtil.particle(hitLoc, this.impactParticle);
-        PlayerUtil.sound(hitLoc, this.impactSound, true);
-        gun.hitBlock(shooter, block, hitLoc);
+        PlayerUtil.particle(hitLoc, QParticle.of(block.getType(), 8, 0.15f));
+        PlayerUtil.Sound.loc(hitLoc, QSound.of(block.getBlockSoundGroup().getBreakSound(), 1, 0.5f, SoundCategory.BLOCKS), 0.2f);
+        gun.hitBlock(shooter, block, hitVec);
     }
 
-    public void fireParticle(@NotNull Location loc, @NotNull Vector dir) {
+    private void fireParticle(@NotNull Location loc, @NotNull Vector dir) {
         Location newLoc = loc.clone();
 
-        for(float i = 3; i <= this.range - 3; i+= RANDOM.nextFloat(0.65f, 1.25f)) {
+        for(float i = 0; i <= this.range; i+= RANDOM.nextFloat(1.75f, 2.5f)) {
             Vector vec = dir.clone().multiply(i);
             Location curPos = newLoc.clone().add(vec);
             if(BLOCK_FILTER.test(curPos.getBlock())) break;
             PlayerUtil.particle(curPos, this.trailParticle);
         }
+    }
+
+    private void hitParticle(@NotNull Vector hitVec, @NotNull World world) {
+        Vector newVec = hitVec.clone();
+        Location newLoc = newVec.toLocation(world).add(0, 2, 0);
+
+        Level level = ((CraftWorld) world).getHandle();
+
+        for(int i = 0; i < 100; i++) {
+            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.LAPIS_BLOCK.defaultBlockState()), newLoc.x(), newLoc.y(), newLoc.z(), 0, 10, 0);
+        }
+
+        //world.spawnParticle(Particle.BLOCK, newLoc, 100, 0, 1, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
     }
 
     @Override
@@ -138,13 +180,18 @@ public abstract class BulletImpl implements Bullet {
     }
 
     @Override
-    public @NotNull WeaponClass getWeaponClass() {
-        return this.weaponClass;
+    public @NotNull BulletClass getBulletClass() {
+        return this.bulletClass;
     }
 
     @Override
     public int getRange() {
         return this.range;
+    }
+
+    @Override
+    public double getBulletSpread() {
+        return this.bulletSpread;
     }
 
     @Override
@@ -168,27 +215,38 @@ public abstract class BulletImpl implements Bullet {
     }
 
     @Override
-    public @NotNull List<Component> getStats() {
-        return List.of(
-                MiniMessage.miniMessage().deserialize("<!italic><white><gold>\uD83D\uDD25</gold> Bonus Damage: <gold>" + this.damage),
-                MiniMessage.miniMessage().deserialize("<!italic><white><yellow>☀</yellow> Range: <yellow>" + this.range),
-                MiniMessage.miniMessage().deserialize("<!italic><white><red>\uD83C\uDF0A</red> Bleed: <red>" + this.bleed)
-        );
+    public @NotNull StatDisplay buildStats() {
+        StatDisplay statDisplay = new StatDisplay();
+
+        statDisplay.set(Stat.Damage.of(this.damage));
+        statDisplay.set(Stat.Range.of(this.range));
+        statDisplay.set(Stat.BulletSpread.of(this.bulletSpread));
+        statDisplay.set(Stat.Bleed.of(this.bleed));
+
+        return statDisplay;
     }
 
     @Override
-    public @NotNull List<Component> getLore() {
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.empty());
-        lore.addAll(this.getStats());
+    public @NotNull List<Component> buildLore() {
+        StatDisplay statDisplay = new StatDisplay();
 
-        if(!this.lore.isEmpty()) {
+        statDisplay.set(Stat.Damage.of(this.damage));
+        statDisplay.set(Stat.Range.of(this.range));
+        statDisplay.set(Stat.Bleed.of(this.bleed));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.empty());
+
+        lore.addAll(this.buildStats().getLore());
+
+        if(!this.description.isEmpty()) {
             lore.add(Component.empty());
-            lore.addAll(this.lore);
+            lore.addAll(this.description);
         }
 
         lore.add(Component.empty());
-        lore.add(MiniMessage.miniMessage().deserialize("<!italic><yellow>Right Click on hotbar magazine to load"));
+        lore.add(MiniMessage.miniMessage().deserialize("<!italic><blue><bold>WEAPON AMMUNITION"));
 
         return lore;
     }
@@ -198,7 +256,7 @@ public abstract class BulletImpl implements Bullet {
         ItemStack itemStack = this.itemStack.clone();
 
         itemStack.setData(DataComponentTypes.ITEM_NAME, this.getName());
-        itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(this.getLore()));
+        itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(this.buildLore()));
         itemStack.setData(DataComponentTypes.MAX_STACK_SIZE, 96);
         itemStack.editMeta(meta -> {
             meta.getPersistentDataContainer().set(NKey.BULLET, PersistentDataType.STRING, this.id);
@@ -207,90 +265,88 @@ public abstract class BulletImpl implements Bullet {
         return itemStack;
     }
 
-    public static class Factory {
+    public static class Factory<T extends BulletImpl.Factory<T>> {
 
-        private WeaponClass weaponClass;
+        private BulletClass bulletClass;
         private int range;
+        private double bulletSpread;
         private float damage;
         private float bleed;
         private float scale;
 
         private Component name;
-        private List<Component> lore;
+        private List<Component> description;
         private ItemStack itemStack;
         private QParticle trailParticle;
-        private QParticle impactParticle;
-        private QSound impactSound;
 
-        public Factory() {
-            this.weaponClass = WeaponClass.PISTOL;
+        Factory() {
+            this.bulletClass = BulletClass.PISTOL;
             this.range = 32;
+            this.bulletSpread = 2.5f;
             this.damage = 1.0f;
             this.bleed = 0.0f;
             this.scale = 0f;
             this.name = MiniMessage.miniMessage().deserialize("<!italic><red>Missing Name");
-            this.lore = List.of();
+            this.description = List.of();
             this.itemStack = QStack.ofClean(Material.GOLD_NUGGET);
             this.trailParticle = QParticle.of(Particle.CRIT, 1, 0.0F);
-            this.impactParticle = QParticle.of(Material.IRON_BARS, 8, 0.25F);
-            this.impactSound = QSound.of(Sound.BLOCK_COPPER_HIT, 2, 2.0F, SoundCategory.PLAYERS);
         }
 
-        public @NotNull Factory weaponClass(@NotNull WeaponClass weaponClass) {
-            Preconditions.checkNotNull(weaponClass, "Weapon Class cannot be null.");
+        public @NotNull T bulletClass(@NotNull BulletClass bulletClass) {
+            Preconditions.checkNotNull(bulletClass, "Weapon Class cannot be null.");
 
-            this.weaponClass = weaponClass;
-            return this;
+            this.bulletClass = bulletClass;
+            return this.self();
         }
 
-        public @NotNull Factory range(int range) {
+        public @NotNull T range(int range) {
             this.range = Math.max(0, range);
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory damage(float damage) {
+        public @NotNull T bulletSpread(double spread) {
+            this.bulletSpread = Math.max(0, spread);
+            return this.self();
+        }
+
+        public @NotNull T damage(float damage) {
             this.damage = Math.max(0, damage);
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory bleed(float bleed) {
+        public @NotNull T bleed(float bleed) {
             this.bleed = Math.max(0, bleed);
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory scale(float scale) {
+        public @NotNull T scale(float scale) {
             this.scale = Math.max(0, scale);
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory name(@NotNull Component name) {
+        public @NotNull T name(@NotNull Component name) {
             this.name = name;
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory lore(@NotNull List<Component> lore) {
-            this.lore = lore;
-            return this;
+        public @NotNull T description(@NotNull List<Component> description) {
+            this.description = description;
+            return this.self();
         }
 
-        public @NotNull Factory itemStack(@NotNull ItemStack itemStack) {
+        public @NotNull T itemStack(@NotNull ItemStack itemStack) {
             this.itemStack = itemStack;
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory trailParticle(@NotNull QParticle trailParticle) {
+        public @NotNull T trailParticle(@NotNull QParticle trailParticle) {
             this.trailParticle = trailParticle;
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory impactParticle(@NotNull QParticle impactParticle) {
-            this.impactParticle = impactParticle;
-            return this;
-        }
-
-        public @NotNull Factory impactSound(@NotNull QSound impactSound) {
-            this.impactSound = impactSound;
-            return this;
+        @SuppressWarnings("unchecked")
+        protected @NotNull T self() {
+            return (T) this;
         }
     }
 }

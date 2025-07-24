@@ -8,36 +8,36 @@ public final class MagazineType<T extends Magazine> {
 
     private static final Fired PLUGIN = Fired.getInstance();
 
-    public static final MagazineType<RifleMagazine> RIFLE_20 = register("rifle_20", RifleMagazine::new, 20);
-    public static final MagazineType<RifleMagazine> RIFLE_40 = register("rifle_40", RifleMagazine::new, 40);
-    public static final MagazineType<RifleDrum> RIFLE_80 = register("rifle_80", RifleDrum::new, 80);
-    public static final MagazineType<RifleDrum> RIFLE_160 = register("rifle_160", RifleDrum::new, 160);
+    public static final MagazineType<AssaultMagazine> ASSAULT_20 = register("a_20", AssaultMagazine.Magazine::new);
+    public static final MagazineType<AssaultMagazine> ASSAULT_3000 = register("a_3000", AssaultMagazine.Drum::new);
 
-    public static final MagazineType<PistolMagazine> PISTOL_10 = register("pistol_10", PistolMagazine::new, 10);
-    public static final MagazineType<PistolMagazine> PISTOL_20 = register("pistol_20", PistolMagazine::new, 20);
-    public static final MagazineType<PistolDrum> PISTOL_60 = register("pistol_60", PistolDrum::new, 60);
+    public static final MagazineType<PistolMagazine> PISTOL_10 = register("p_10", PistolMagazine.Magazine::new);
+    public static final MagazineType<PistolMagazine> PISTOL_60 = register("p_60", PistolMagazine.Drum::new);
+
+    public static final MagazineType<HeavyMagazine> HEAVY_10 = register("h_10", HeavyMagazine.Magazine::new);
+
+    public static final MagazineType<ShellMagazine> SHELL_8 = register("s_8", ShellMagazine.Magazine::new);
 
     private final MagFactory<T> factory;
-    private final int capacity;
 
-    private MagazineType(@NotNull MagazineType.MagFactory<T> factory, int capacity) {
+
+    private MagazineType(@NotNull MagazineType.MagFactory<T> factory) {
         this.factory = factory;
-        this.capacity = capacity;
     }
 
     public @NotNull T createNew() {
-        T gun = this.factory.create(this, capacity);
+        T gun = this.factory.create(this);
         LiveMagazineRegistry liveRegistry = PLUGIN.getLiveMagazineReg();
 
         return liveRegistry.register(gun);
     }
 
-    private static <T extends Magazine> @NotNull MagazineType<T> register(String id, MagFactory<T> factory, int capacity) {
-        return PLUGIN.getMagazineReg().register(id, new MagazineType<>(factory, capacity));
+    private static <T extends Magazine> @NotNull MagazineType<T> register(String id, MagFactory<T> factory) {
+        return PLUGIN.getMagazineReg().register(id, new MagazineType<>(factory));
     }
 
     @FunctionalInterface
     public interface MagFactory<T extends Magazine> {
-        @NotNull T create(@NotNull MagazineType<?> magazineType, int capacity);
+        @NotNull T create(@NotNull MagazineType<?> magazineType);
     }
 }

@@ -1,19 +1,28 @@
 package net.qilla.fired.weapon.gun;
 
 import net.qilla.fired.Fired;
-import net.qilla.fired.weapon.gun.implementation.AssaultRifleGun;
-import net.qilla.fired.weapon.gun.implementation.BurstRifleGun;
-import net.qilla.fired.weapon.gun.implementation.MagnumGun;
-import net.qilla.fired.weapon.gun.implementation.Gun;
+import net.qilla.fired.weapon.gun.implementation.*;
+import net.qilla.fired.weapon.gun.implementation.assault.AssaultLancia;
+import net.qilla.fired.weapon.gun.implementation.assault.AssaultFenrir6;
+import net.qilla.fired.weapon.gun.implementation.heavy.HeavyHadrian;
+import net.qilla.fired.weapon.gun.implementation.assault.AssaultMinigun;
+import net.qilla.fired.weapon.gun.implementation.pistol.PistolBrim44;
+import net.qilla.fired.weapon.gun.implementation.shotgun.ShotgunGraveshot;
 import org.jetbrains.annotations.NotNull;
 
 public final class GunType<T extends Gun> {
 
     private static final Fired PLUGIN = Fired.getInstance();
 
-    public static final GunType<BurstRifleGun> rifle_burst_rifle = register("burst_rifle", BurstRifleGun::new);
-    public static final GunType<AssaultRifleGun> rifle_assault_rifle = register("assault_rifle", AssaultRifleGun::new);
-    public static final GunType<MagnumGun> pistol_magnum = register("magnum_pistol", MagnumGun::new);
+    public static final GunType<AssaultFenrir6> ASSAULT_FENRIR6 = register("a_fenrir6", AssaultFenrir6::new);
+    public static final GunType<AssaultLancia> ASSAULT_LANCIA = register("a_lancia", AssaultLancia::new);
+    public static final GunType<AssaultMinigun> MACHINE_MINIGUN = register("a_minigun", AssaultMinigun::new);
+
+    public static final GunType<PistolBrim44> PISTOL_BRIM44 = register("p_brim44", PistolBrim44::new);
+
+    public static final GunType<HeavyHadrian> HEAVY_HADRIAN = register("h_hadrian", HeavyHadrian::new);
+
+    public static final GunType<ShotgunGraveshot> SHOTGUN_GRAVESHOT = register("s_graveshot", ShotgunGraveshot::new);
 
     private final GunType.GunFactory<T> factory;
 

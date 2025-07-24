@@ -1,7 +1,8 @@
 package net.qilla.fired.weapon.magazine.implementation;
 
 import net.kyori.adventure.text.Component;
-import net.qilla.fired.weapon.WeaponClass;
+import net.qilla.fired.weapon.Rarity;
+import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import org.bukkit.entity.Player;
@@ -19,31 +20,33 @@ public interface Magazine {
 
     void load(@NotNull Player player, @NotNull ItemStack magItem);
 
-    @Nullable Bullet unload();
+    @Nullable Bullet pullBullet();
 
     void updateItem(@NotNull ItemStack itemStack);
 
     @NotNull MagazineType<?> getMagazineType();
 
-    @Nullable Bullet getNext();
+    @Nullable Bullet viewNextBullet();
 
     long getReloadSpeed();
 
-    @NotNull WeaponClass getWeaponClass();
+    @NotNull BulletClass getBulletClass();
 
     int getCapacity();
 
-    int getLoaded();
+    int getLoadedBulletsSize();
 
-    int getQueued();
+    int getQueuedBulletsSize();
 
-    boolean isFull();
+    boolean isMagazineFull();
 
-    boolean hasQueued();
+    boolean hasQueuedBullets();
 
-    boolean isEmpty();
+    boolean isMagazineEmpty();
 
     @NotNull ItemStack getItem();
+
+    @NotNull Rarity getRarity();
 
     @NotNull Component getName();
 

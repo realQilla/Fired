@@ -1,8 +1,9 @@
 package net.qilla.fired.weapon.bullet.implementation;
 
 import net.kyori.adventure.text.Component;
-import net.qilla.fired.weapon.WeaponClass;
+import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
+import net.qilla.fired.weapon.visualstats.StatDisplay;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
@@ -16,15 +17,17 @@ import java.util.List;
 public interface Bullet {
     void fire(@NotNull Player shooter, @NotNull Location loc, @NotNull Vector dir, @NotNull Gun gun);
 
-    void hitEntity(@NotNull Gun gun, @NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Location loc);
+    void hitEntity(@NotNull Gun gun, @NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec);
 
-    void hitBlock(@NotNull Gun gun, @NotNull Player shooter, @NotNull Block block, @NotNull Location loc);
+    void hitBlock(@NotNull Gun gun, @NotNull Player shooter, @NotNull Block block, @NotNull Vector hitVec);
 
     @NotNull String getID();
 
-    @NotNull WeaponClass getWeaponClass();
+    @NotNull BulletClass getBulletClass();
 
     int getRange();
+
+    double getBulletSpread();
 
     float getDamage();
 
@@ -36,7 +39,7 @@ public interface Bullet {
 
     @NotNull Component getName();
 
-    @NotNull List<Component> getStats();
+    @NotNull StatDisplay buildStats();
 
-    @NotNull List<Component> getLore();
+    @NotNull List<Component> buildLore();
 }
