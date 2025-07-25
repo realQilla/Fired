@@ -3,7 +3,7 @@ package net.qilla.fired.weapon.bullet.implementation;
 import net.kyori.adventure.text.Component;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
-import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.fired.weapon.visualstats.StatHolder;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
@@ -39,7 +39,7 @@ public interface Bullet {
 
     @NotNull Component getName();
 
-    @NotNull StatDisplay buildStats();
+    @NotNull StatHolder buildStats();
 
     @NotNull List<Component> buildLore();
 }

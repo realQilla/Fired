@@ -14,8 +14,8 @@ import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.GunType;
-import net.qilla.fired.weapon.visualstats.Stat;
-import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.fired.weapon.visualstats.StatHolder;
+import net.qilla.fired.weapon.visualstats.GunStat;
 import net.qilla.qlibrary.items.QStack;
 import net.qilla.qlibrary.util.QSound;
 import net.qilla.qlibrary.util.tools.PlayerUtil;
@@ -46,12 +46,12 @@ public abstract class GunImpl implements Gun {
     private final GunType<?> gunType;
     private final BulletClass bulletClass;
     private final float damage;
+    private final double accuracy;
     private final int fireCooldown;
 
     private final Rarity rarity;
     private final Component name;
     private final List<Component> description;
-    private final StatDisplay statDisplay = new StatDisplay();
     private final ItemStack itemStack;
     private final QSound fireSound;
     private final QSound loadSound;
@@ -62,7 +62,7 @@ public abstract class GunImpl implements Gun {
     private long lastFire;
     private long lastReload;
 
-    GunImpl(@NotNull GunType<?> gunType, @NotNull GunImpl.Factory<?> factory) {
+    public GunImpl(@NotNull GunType<?> gunType, @NotNull GunImpl.Factory<?> factory) {
         Preconditions.checkNotNull(gunType, "GunType cannot be null.");
         Preconditions.checkNotNull(factory, "Builder cannot be null.");
 
@@ -70,6 +70,7 @@ public abstract class GunImpl implements Gun {
         this.gunType = gunType;
         this.bulletClass = factory.bulletClass;
         this.damage = factory.damage;
+        this.accuracy = factory.accuracy;
         this.fireCooldown = factory.fireCooldown;
 
         this.rarity = factory.rarity;
@@ -203,17 +204,17 @@ public abstract class GunImpl implements Gun {
     }
 
     @Override
-    public @NotNull StatDisplay buildStats() {
-        StatDisplay statDisplay = new StatDisplay();
+    public @NotNull StatHolder buildStats() {
+        StatHolder statHolder = new StatHolder();
         Bullet nextBullet = null;
 
         if(this.magazine != null) nextBullet = this.magazine.viewNextBullet();
 
-        statDisplay.set(Stat.Damage.of(this.getDamage(), nextBullet == null ? 0 : nextBullet.getDamage()));
-        statDisplay.set(Stat.FireRate.of(this.fireCooldown));
-        statDisplay.set(Stat.BulletSpread.of(nextBullet == null ? 0.0f : nextBullet.getBulletSpread()));
+        statHolder.set(GunStat.Damage.of(this.getDamage(), nextBullet == null ? 0 : nextBullet.getDamage()));
+        statHolder.set(GunStat.FireRate.of(this.fireCooldown));
+        statHolder.set(GunStat.Accuracy.of(nextBullet == null ? 0.0f : nextBullet.getBulletSpread(), this.accuracy));
 
-        return statDisplay;
+        return statHolder;
     }
 
     @Override
@@ -276,6 +277,11 @@ public abstract class GunImpl implements Gun {
     }
 
     @Override
+    public double getAccuracy() {
+        return this.accuracy;
+    }
+
+    @Override
     public int getFireCD() {
         return this.fireCooldown;
     }
@@ -319,6 +325,7 @@ public abstract class GunImpl implements Gun {
 
         private BulletClass bulletClass;
         private float damage;
+        private double accuracy;
         private int fireCooldown;
 
         private Rarity rarity;
@@ -334,6 +341,7 @@ public abstract class GunImpl implements Gun {
             this.bulletClass = BulletClass.PISTOL;
             this.rarity = Rarity.COMMON_I;
             this.damage = 2.5F;
+            this.accuracy = 1;
             this.fireCooldown = 250;
 
             this.name = MiniMessage.miniMessage().deserialize("<red>Missing Field");
@@ -369,6 +377,10 @@ public abstract class GunImpl implements Gun {
             return self();
         }
 
+        /**
+         * The magazine type to look for when validating a magazine to be compatible.
+         */
+
         public @NotNull T bulletClass(@NotNull BulletClass bulletClass) {
             Preconditions.checkNotNull(bulletClass, "Weapon Class cannot be null!");
             this.bulletClass = bulletClass;
@@ -379,6 +391,23 @@ public abstract class GunImpl implements Gun {
             this.damage = Math.max(0, damage);
             return this.self();
         }
+
+        /**
+         * An accuracy multiplier to use for this gun. Must be greater than 0.
+         * Values less than 1 will tighten the bullet spread, values over 1
+         * will multiply the bullet's final spread.
+         * @param accuracy Any number greater than 0.
+         */
+
+        public @NotNull T accuracy(double accuracy) {
+            this.accuracy = Math.max(0, accuracy);
+            return this.self();
+        }
+
+        /**
+         * Cooldown in milliseconds that the gun will wait for before allowing another
+         * shot to be fired.
+         */
 
         public @NotNull T fireCooldown(int fireCooldown) {
             this.fireCooldown = Math.max(0, fireCooldown);
@@ -402,6 +431,11 @@ public abstract class GunImpl implements Gun {
             this.unloadSound = sound;
             return this.self();
         }
+
+        /**
+         * The initial {@link net.qilla.fired.weapon.magazine.implementation.MagazineImpl} magazine that is loaded
+         * at creation time.
+         */
 
         public @NotNull T magazine(@Nullable Magazine magazine) {
             this.magazine = magazine;

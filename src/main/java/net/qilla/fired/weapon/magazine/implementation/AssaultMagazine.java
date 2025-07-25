@@ -17,49 +17,54 @@ public abstract class AssaultMagazine extends MagazineImpl {
         super(magazineType, factory);
     }
 
-    public static final class Magazine extends AssaultMagazine {
-
-        public Magazine(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine10 extends AssaultMagazine {
+        public Magazine10(@NotNull MagazineType<?> magazineType) {
             super(magazineType, new MagazineImpl.Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>A-❌❌ Magazine"))
-                    .rarity(Rarity.COMMON_III)
+                    .name(MiniMessage.miniMessage().deserialize("<white>A-XX Magazine"))
+                    .rarity(Rarity.COMMON_I)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.IRON_INGOT, 1))
                     .bulletClass(BulletClass.ASSAULT)
-                    .capacity(20)
-                    .reloadSpeed(250)
+                    .capacity(10)
+                    .reloadSpeed(750)
             );
         }
     }
 
-
-    public static final class Drum extends AssaultMagazine {
-
-        public Drum(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine20 extends AssaultMagazine {
+        public Magazine20(@NotNull MagazineType<?> magazineType) {
             super(magazineType, new MagazineImpl.Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>A-❌❌ Magazine Drum"))
-                    .rarity(Rarity.RARE_II)
+                    .name(MiniMessage.miniMessage().deserialize("<white>A-XX Magazine"))
+                    .rarity(Rarity.COMMON_II)
+                    .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.IRON_INGOT, 1))
+                    .bulletClass(BulletClass.ASSAULT)
+                    .capacity(20)
+                    .reloadSpeed(500)
+            );
+        }
+    }
+
+    public static final class Magazine40 extends AssaultMagazine {
+        public Magazine40(@NotNull MagazineType<?> magazineType) {
+            super(magazineType, new MagazineImpl.Factory()
+                    .name(MiniMessage.miniMessage().deserialize("<white>A-XX Magazine"))
+                    .rarity(Rarity.COMMON_III)
+                    .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.IRON_INGOT, 1))
+                    .bulletClass(BulletClass.ASSAULT)
+                    .capacity(40)
+                    .reloadSpeed(333)
+            );
+        }
+    }
+
+    public static final class Magazine80 extends AssaultMagazine {
+        public Magazine80(@NotNull MagazineType<?> magazineType) {
+            super(magazineType, new MagazineImpl.Factory()
+                    .name(MiniMessage.miniMessage().deserialize("<white>A-XX Magazine Drum"))
+                    .rarity(Rarity.RARE_III)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.HOPPER_MINECART, 1))
                     .bulletClass(BulletClass.ASSAULT)
-                    .capacity(3000)
-                    .reloadSpeed(50)
-                    .bullets(List.of(
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,
-                            BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM,BulletType.A_FM
-                            ))
+                    .capacity(80)
+                    .reloadSpeed(250)
             );
         }
     }

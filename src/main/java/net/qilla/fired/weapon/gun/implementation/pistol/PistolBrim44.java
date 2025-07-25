@@ -4,13 +4,13 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.gun.GunType;
 import net.qilla.fired.weapon.bullet.BulletClass;
-import net.qilla.fired.weapon.gun.implementation.GunPistol;
+import net.qilla.fired.weapon.gun.implementation.GunImpl;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
-public final class PistolBrim44 extends GunPistol {
+public final class PistolBrim44 extends GunImpl {
 
     public PistolBrim44(@NotNull GunType<?> gunType) {
         super(gunType, new Factory<>()
@@ -23,6 +23,7 @@ public final class PistolBrim44 extends GunPistol {
                 .rarity(Rarity.RARE_I)
                 .itemStack(QStack.ofClean(Material.GOLDEN_HOE))
                 .damage(6.5f)
+                .accuracy(1.0)
                 .fireCooldown(333)
         );
     }

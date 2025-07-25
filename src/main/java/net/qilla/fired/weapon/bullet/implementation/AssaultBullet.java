@@ -13,12 +13,12 @@ public abstract class AssaultBullet extends BulletImpl {
         super(id, factory);
     }
 
-    public static final class AFMRound extends AssaultBullet {
-        public AFMRound(@NotNull String id) {
+    public static final class ASDRound extends AssaultBullet {
+        public ASDRound(@NotNull String id) {
             super(id, new BulletImpl.Factory<>()
-                    .name(MiniMessage.miniMessage().deserialize("<white>A-FM Round"))
+                    .name(MiniMessage.miniMessage().deserialize("<white>A-SD Round"))
                     .description(List.of(
-                            MiniMessage.miniMessage().deserialize("<!italic><dark_gray>Standard 'Full Metal' rifle bullet. All that's"),
+                            MiniMessage.miniMessage().deserialize("<!italic><dark_gray>Standard full metal rifle bullet. All that's"),
                             MiniMessage.miniMessage().deserialize("<!italic><dark_gray>needed to cause serious damage to whatever or"),
                             MiniMessage.miniMessage().deserialize("<!italic><dark_gray>whomever opposes this mid ranged rifle.")
                     ))

@@ -16,8 +16,9 @@ import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
-import net.qilla.fired.weapon.visualstats.Stat;
+import net.qilla.fired.weapon.visualstats.BulletStat;
 import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.qlibrary.items.QStack;
 import net.qilla.qlibrary.util.QParticle;
 import net.qilla.qlibrary.util.QSound;
@@ -81,7 +82,7 @@ public abstract class BulletImpl implements Bullet {
 
     @Override
     public void fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull Vector originDir, @NotNull Gun gun) {
-        Vector dir = this.calcAimCone(originDir, this.bulletSpread);
+        Vector dir = this.calcAimCone(originDir, this.bulletSpread * gun.getAccuracy());
         RayTraceResult result = originLoc.getWorld().rayTrace(builder -> builder
                 .start(originLoc)
                 .direction(dir)
@@ -215,25 +216,19 @@ public abstract class BulletImpl implements Bullet {
     }
 
     @Override
-    public @NotNull StatDisplay buildStats() {
-        StatDisplay statDisplay = new StatDisplay();
+    public @NotNull StatHolder buildStats() {
+        StatHolder statHolder = new StatHolder();
 
-        statDisplay.set(Stat.Damage.of(this.damage));
-        statDisplay.set(Stat.Range.of(this.range));
-        statDisplay.set(Stat.BulletSpread.of(this.bulletSpread));
-        statDisplay.set(Stat.Bleed.of(this.bleed));
+        statHolder.set(BulletStat.Damage.of(this.damage));
+        statHolder.set(BulletStat.Range.of(this.range));
+        statHolder.set(BulletStat.BulletSpread.of(this.bulletSpread));
+        statHolder.set(BulletStat.Bleed.of(this.bleed));
 
-        return statDisplay;
+        return statHolder;
     }
 
     @Override
     public @NotNull List<Component> buildLore() {
-        StatDisplay statDisplay = new StatDisplay();
-
-        statDisplay.set(Stat.Damage.of(this.damage));
-        statDisplay.set(Stat.Range.of(this.range));
-        statDisplay.set(Stat.Bleed.of(this.bleed));
-
         List<Component> lore = new ArrayList<>();
 
         lore.add(Component.empty());

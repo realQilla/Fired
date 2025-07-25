@@ -5,7 +5,7 @@ import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.GunType;
-import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.qlibrary.util.QSound;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -54,9 +54,11 @@ public interface Gun {
 
     float getDamage();
 
+    double getAccuracy();
+
     int getFireCD();
 
-    @NotNull StatDisplay buildStats();
+    @NotNull StatHolder buildStats();
 
     @NotNull QSound getFireSound();
 

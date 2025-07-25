@@ -14,16 +14,28 @@ public abstract class HeavyMagazine extends MagazineImpl {
         super(magazineType, factory);
     }
 
-    public static final class Magazine extends HeavyMagazine {
-
-        public Magazine(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine8 extends HeavyMagazine {
+        public Magazine8(@NotNull MagazineType<?> magazineType) {
             super(magazineType, new Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>H-❌❌ Magazine"))
+                    .name(MiniMessage.miniMessage().deserialize("<white>H-XX Magazine"))
                     .rarity(Rarity.RARE_I)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.NETHERITE_INGOT, 1))
                     .bulletClass(BulletClass.HEAVY)
                     .capacity(8)
-                    .reloadSpeed(250)
+                    .reloadSpeed(1250)
+            );
+        }
+    }
+
+    public static final class Magazine24 extends HeavyMagazine {
+        public Magazine24(@NotNull MagazineType<?> magazineType) {
+            super(magazineType, new Factory()
+                    .name(MiniMessage.miniMessage().deserialize("<white>H-XX Magazine"))
+                    .rarity(Rarity.RARE_III)
+                    .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.NETHERITE_INGOT, 1))
+                    .bulletClass(BulletClass.HEAVY)
+                    .capacity(24)
+                    .reloadSpeed(750)
             );
         }
     }

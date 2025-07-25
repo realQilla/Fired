@@ -23,6 +23,7 @@ public final class AssaultLancia extends GunAutomatic {
                 .rarity(Rarity.RARE_III)
                 .itemStack(QStack.ofClean(Material.IRON_HOE))
                 .damage(4.0f)
+                .accuracy(1.1)
                 .fireCooldown(110)
         );
     }

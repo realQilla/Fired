@@ -5,7 +5,6 @@ import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
-import java.util.List;
 
 public abstract class HeavyBullet extends BulletImpl {
 
@@ -13,11 +12,11 @@ public abstract class HeavyBullet extends BulletImpl {
         super(id, factory);
     }
 
-    public static final class HFMRound extends HeavyBullet {
+    public static final class HSDRound extends HeavyBullet {
 
-        public HFMRound(@NotNull String id) {
+        public HSDRound(@NotNull String id) {
             super(id, new Factory<>()
-                    .name(MiniMessage.miniMessage().deserialize("<white>H-FM Round"))
+                    .name(MiniMessage.miniMessage().deserialize("<white>H-SD Round"))
                     .itemStack(QStack.ofClean(Material.GHAST_TEAR))
                     .bulletClass(BulletClass.HEAVY)
                     .damage(2.0f)

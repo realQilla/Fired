@@ -3,15 +3,15 @@ package net.qilla.fired.weapon.bullet.implementation;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
-import net.qilla.fired.weapon.visualstats.Stat;
+import net.qilla.fired.weapon.visualstats.BulletStat;
 import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-import java.util.List;
 
 public abstract class ShellBullet extends BulletImpl {
 
@@ -30,42 +30,40 @@ public abstract class ShellBullet extends BulletImpl {
     }
 
     @Override
-    public @NotNull StatDisplay buildStats() {
-        StatDisplay statDisplay = super.buildStats();
+    public @NotNull StatHolder buildStats() {
+        StatHolder statHolder = super.buildStats();
 
-        statDisplay.set(Stat.BonusDamage.of(super.getDamage(), this.pelletCount));
+        statHolder.set(BulletStat.Damage.of(super.getDamage(), this.pelletCount));
 
-        return statDisplay;
+        return statHolder;
     }
 
-    public static final class SFMRound extends ShellBullet {
-
-        public SFMRound(@NotNull String id) {
+    public static final class SSDRound extends ShellBullet {
+        public SSDRound(@NotNull String id) {
             super(id, new ShellBullet.Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>P-FM Shell"))
+                    .name(MiniMessage.miniMessage().deserialize("<white>S-SD Shell"))
                     .itemStack(QStack.ofClean(Material.ARMADILLO_SCUTE))
                     .bulletClass(BulletClass.SHELL)
-                    .damage(0.0f)
+                    .damage(0.75f)
                     .range(32)
                     .bulletSpread(15.0)
-                    .bleed(1.0f)
+                    .bleed(1.25f)
                     .scale(0)
-                    .pelletCount(8)
+                    .pelletCount(12)
             );
         }
     }
 
     public static final class SSRound extends ShellBullet {
-
         public SSRound(@NotNull String id) {
             super(id, new ShellBullet.Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>P-S Shell"))
+                    .name(MiniMessage.miniMessage().deserialize("<white>S-S Slug"))
                     .itemStack(QStack.ofClean(Material.ARMADILLO_SCUTE))
                     .bulletClass(BulletClass.SHELL)
                     .damage(18.0f)
                     .range(128)
                     .bulletSpread(2.0)
-                    .bleed(1.0f)
+                    .bleed(4.0f)
                     .scale(0)
                     .pelletCount(1)
             );

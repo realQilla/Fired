@@ -1,8 +1,8 @@
 package net.qilla.fired.weapon.gun.implementation;
 
 import net.qilla.fired.weapon.gun.GunType;
-import net.qilla.fired.weapon.visualstats.Stat;
-import net.qilla.fired.weapon.visualstats.StatDisplay;
+import net.qilla.fired.weapon.visualstats.StatHolder;
+import net.qilla.fired.weapon.visualstats.GunStat;
 import net.qilla.qlibrary.util.tools.QRunnable;
 import net.qilla.qlibrary.util.tools.QTask;
 import org.bukkit.Location;
@@ -42,12 +42,12 @@ public abstract class GunBurst extends GunImpl {
     }
 
     @Override
-    public @NotNull StatDisplay buildStats() {
-        StatDisplay statDisplay = super.buildStats();
+    public @NotNull StatHolder buildStats() {
+        StatHolder statHolder = super.buildStats();
 
-        statDisplay.set(Stat.FireRate.of(super.getFireCD(), this.burstCount));
+        statHolder.set(GunStat.FireRate.of(super.getFireCD(), this.burstCount));
 
-        return statDisplay;
+        return statHolder;
     }
 
     @Override

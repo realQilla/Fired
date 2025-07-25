@@ -1,24 +1,39 @@
 package net.qilla.fired.weapon.visualstats;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.List;
+public abstract class StatDisplay<T extends Number> {
 
-public class StatDisplay {
+    private final T value;
+    private final String display;
 
-    private final LinkedHashMap<String, Stat<?>> stats = new LinkedHashMap<>();
+    public StatDisplay(@NotNull T value, @NotNull String display) {
+        this.value = value;
+        this.display = display;
+    }
+    public abstract @NotNull String getID();
 
-    public Stat<?> set(@NotNull Stat<?> stat) {
-        return stats.put(stat.getID(), stat);
+    public @NotNull T getValue() {
+        return value;
     }
 
-    public List<Stat<?>> getStats() {
-        return List.copyOf(stats.values());
+    public @NotNull String getDisplay() {
+        return this.display;
     }
 
-    public @NotNull List<Component> getLore() {
-        return stats.values().stream().map(Stat::getFormatted).toList();
+    public @NotNull Component getFormatted() {
+        String str = this.display;
+
+        str = str.replace("%value%", String.valueOf(this.value));
+        return MiniMessage.miniMessage().deserialize(str);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StatDisplay<?> statDisplay) {
+            return this.getID().equals(statDisplay.getID());
+        } else return false;
     }
 }

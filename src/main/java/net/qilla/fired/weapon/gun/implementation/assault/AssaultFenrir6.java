@@ -23,6 +23,7 @@ public final class AssaultFenrir6 extends GunBurst {
                 .rarity(Rarity.RARE_II)
                 .itemStack(QStack.ofClean(Material.IRON_HOE))
                 .damage(5.0f)
+                .accuracy(1.0)
                 .fireCooldown(500)
                 .burstCount(3)
                 .burstInterval(80)

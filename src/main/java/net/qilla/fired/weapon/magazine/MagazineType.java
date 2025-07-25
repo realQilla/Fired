@@ -8,15 +8,29 @@ public final class MagazineType<T extends Magazine> {
 
     private static final Fired PLUGIN = Fired.getInstance();
 
-    public static final MagazineType<AssaultMagazine> ASSAULT_20 = register("a_20", AssaultMagazine.Magazine::new);
-    public static final MagazineType<AssaultMagazine> ASSAULT_3000 = register("a_3000", AssaultMagazine.Drum::new);
+    // Assault Magazines
+    public static final MagazineType<AssaultMagazine> ASSAULT_10 = register("a_20", AssaultMagazine.Magazine10::new);
+    public static final MagazineType<AssaultMagazine> ASSAULT_20 = register("a_20", AssaultMagazine.Magazine20::new);
+    public static final MagazineType<AssaultMagazine> ASSAULT_40 = register("a_40", AssaultMagazine.Magazine40::new);
+    public static final MagazineType<AssaultMagazine> ASSAULT_80 = register("a_80", AssaultMagazine.Magazine80::new);
 
-    public static final MagazineType<PistolMagazine> PISTOL_10 = register("p_10", PistolMagazine.Magazine::new);
-    public static final MagazineType<PistolMagazine> PISTOL_60 = register("p_60", PistolMagazine.Drum::new);
+    // Machine Magazines
+    public static final MagazineType<MachineMagazine> MACHINE_250 = register("m_250", MachineMagazine.Magazine250::new);
+    public static final MagazineType<MachineMagazine> MACHINE_1000 = register("m_1000", MachineMagazine.Magazine1000::new);
 
-    public static final MagazineType<HeavyMagazine> HEAVY_10 = register("h_10", HeavyMagazine.Magazine::new);
+    // Pistol Magazines
+    public static final MagazineType<PistolMagazine> PISTOL_10 = register("p_10", PistolMagazine.Magazine10::new);
+    public static final MagazineType<PistolMagazine> PISTOL_20 = register("p_20", PistolMagazine.Magazine20::new);
+    public static final MagazineType<PistolMagazine> PISTOL_60 = register("p_60", PistolMagazine.Magazine60::new);
 
-    public static final MagazineType<ShellMagazine> SHELL_8 = register("s_8", ShellMagazine.Magazine::new);
+    // Heavy Magazines
+    public static final MagazineType<HeavyMagazine> HEAVY_10 = register("h_10", HeavyMagazine.Magazine8::new);
+    public static final MagazineType<HeavyMagazine> HEAVY_24 = register("h_24", HeavyMagazine.Magazine24::new);
+
+    // Shotgun Magazines
+    public static final MagazineType<ShellMagazine> SHELL_8 = register("s_8", ShellMagazine.Magazine8::new);
+    public static final MagazineType<ShellMagazine> SHELL_16 = register("s_16", ShellMagazine.Magazine16::new);
+    public static final MagazineType<ShellMagazine> SHELL_24 = register("s_24", ShellMagazine.Magazine24::new);
 
     private final MagFactory<T> factory;
 

@@ -43,7 +43,7 @@ public final class Fired extends JavaPlugin {
         this.bulletReg = BulletRegistry.getInstance();
         var gun = GunType.MACHINE_MINIGUN;
         var magazine = MagazineType.ASSAULT_20;
-        var bullet = BulletType.A_FM;
+        var bullet = BulletType.A_SD;
 
         this.registerCommands();
         this.registerListeners();

@@ -4,13 +4,13 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.GunType;
-import net.qilla.fired.weapon.gun.implementation.GunSniperRifle;
+import net.qilla.fired.weapon.gun.implementation.GunImpl;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
-public class HeavyHadrian extends GunSniperRifle {
+public class HeavyHadrian extends GunImpl {
 
     public HeavyHadrian(@NotNull GunType<?> gunType) {
         super(gunType, new Factory<>()
@@ -23,6 +23,7 @@ public class HeavyHadrian extends GunSniperRifle {
                 .rarity(Rarity.LEGENDARY)
                 .itemStack(QStack.ofClean(Material.NETHERITE_HOE))
                 .damage(38.0f)
+                .accuracy(0.75)
                 .fireCooldown(1500)
         );
     }

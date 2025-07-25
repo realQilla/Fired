@@ -8,16 +8,23 @@ public final class BulletType {
 
     private static final Fired PLUGIN = Fired.getInstance();
 
-    public static final AssaultBullet A_FM = register(new AssaultBullet.AFMRound("a_fm"));
+    // Assault Bullets
+    public static final AssaultBullet A_SD = register(new AssaultBullet.ASDRound("a_sd"));
     public static final AssaultBullet A_HV = register(new AssaultBullet.AHVRound("a_hv"));
     public static final AssaultBullet A_H = register(new AssaultBullet.AHRound("a_h"));
     public static final AssaultBullet A_OS = register(new AssaultBullet.AOSRound("a_os"));
 
-    public static final PistolBullet P_FM = register(new PistolBullet.PFMRound("p_fm"));
+    // Machine Bullets
+    public static final MachineBullet M_SD = register(new MachineBullet.MSDRound("m_sd"));
 
-    public static final HeavyBullet H_FM = register(new HeavyBullet.HFMRound("h_fm"));
+    // Pistol Bullets
+    public static final PistolBullet P_SD = register(new PistolBullet.PSDRound("p_sd"));
 
-    public static final ShellBullet S_FM = register(new ShellBullet.SFMRound("s_fm"));
+    // Heavy Bullets
+    public static final HeavyBullet H_SD = register(new HeavyBullet.HSDRound("h_sd"));
+
+    // Shotgun Bullets
+    public static final ShellBullet S_SD = register(new ShellBullet.SSDRound("s_sd"));
     public static final ShellBullet S_S = register(new ShellBullet.SSRound("s_s"));
 
     private static <T extends Bullet> @NotNull T register(@NotNull T bullet) {

@@ -16,49 +16,58 @@ public abstract class PistolMagazine extends MagazineImpl {
         super(magazineType, factory);
     }
 
-    public static final class Magazine extends PistolMagazine {
-
-        public Magazine(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine10 extends PistolMagazine {
+        public Magazine10(@NotNull MagazineType<?> magazineType) {
             super(magazineType, new Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>P-❌❌ Magazine"))
-                    .rarity(Rarity.COMMON_II)
+                    .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine"))
+                    .rarity(Rarity.COMMON_I)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.COPPER_INGOT, 1))
                     .bulletClass(BulletClass.PISTOL)
-                    .capacity(20)
-                    .reloadSpeed(250)
+                    .capacity(10)
+                    .reloadSpeed(750)
             );
         }
     }
 
-
-
-    public static final class Drum extends PistolMagazine {
-
-        public Drum(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine20 extends PistolMagazine {
+        public Magazine20(@NotNull MagazineType<?> magazineType) {
             super(magazineType, new Factory()
-                    .name(MiniMessage.miniMessage().deserialize("<white>P-❌❌ Magazine Drum"))
-                    .rarity(Rarity.RARE_I)
+                    .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine"))
+                    .rarity(Rarity.COMMON_III)
+                    .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.COPPER_INGOT, 1))
+                    .bulletClass(BulletClass.PISTOL)
+                    .capacity(20)
+                    .reloadSpeed(650)
+            );
+        }
+    }
+
+    public static final class Magazine60 extends PistolMagazine {
+        public Magazine60(@NotNull MagazineType<?> magazineType) {
+            super(magazineType, new Factory()
+                    .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine Drum"))
+                    .rarity(Rarity.RARE_II)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.HOPPER_MINECART, 1))
                     .bulletClass(BulletClass.PISTOL)
                     .capacity(60)
                     .reloadSpeed(50)
                     .bullets(List.of(
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM,
-                            BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM, BulletType.P_FM
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD,
+                            BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD, BulletType.P_SD
                     ))
             );
         }
