@@ -18,7 +18,7 @@ public abstract class PistolBullet extends BulletImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>P-SD Round"))
                     .itemStack(QStack.ofClean(Material.IRON_NUGGET))
                     .bulletClass(BulletClass.PISTOL)
-                    .damage(2.0f)
+                    .damage(8.0f)
                     .range(48)
                     .bulletSpread(4.0)
                     .bleed(1.5f)

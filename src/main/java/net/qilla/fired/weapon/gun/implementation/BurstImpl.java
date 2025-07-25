@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
-public abstract class GunBurst extends GunImpl {
+public abstract class BurstImpl extends GunImpl {
 
     private final int burstCount;
     private final long burstInterval;
 
-    public GunBurst(@NotNull GunType<?> gunType, @NotNull GunBurst.Factory factory) {
+    public BurstImpl(@NotNull GunType<?> gunType, @NotNull BurstImpl.Factory factory) {
         super(gunType, factory);
 
         this.burstCount = factory.burstCount;
@@ -33,7 +33,7 @@ public abstract class GunBurst extends GunImpl {
             new QRunnable(new QTask() {
                 @Override
                 public void run() {
-                    if(!GunBurst.super.fire(shooter, shooter.getEyeLocation(), gunItem)) cancel();
+                    if(!BurstImpl.super.fire(shooter, shooter.getEyeLocation(), gunItem)) cancel();
                 }
             }, this.burstCount).runSync(super.getPlugin(), Executors.newSingleThreadScheduledExecutor(), 0, this.burstInterval, TimeUnit.MILLISECONDS);
         }
@@ -63,7 +63,7 @@ public abstract class GunBurst extends GunImpl {
         return this.burstInterval;
     }
 
-    public static final class Factory extends GunImpl.Factory<GunBurst.Factory> {
+    public static final class Factory extends GunImpl.Factory<BurstImpl.Factory> {
 
         private int burstCount;
         private long burstInterval;
@@ -73,12 +73,12 @@ public abstract class GunBurst extends GunImpl {
             this.burstInterval = 100;
         }
 
-        public @NotNull GunBurst.Factory burstCount(int value) {
+        public @NotNull BurstImpl.Factory burstCount(int value) {
             this.burstCount = Math.max(1, value);
             return this;
         }
 
-        public @NotNull GunBurst.Factory burstInterval(long value) {
+        public @NotNull BurstImpl.Factory burstInterval(long value) {
             this.burstInterval = Math.max(1, value);
             return this;
         }

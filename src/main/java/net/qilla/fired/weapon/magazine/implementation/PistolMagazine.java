@@ -4,6 +4,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletType;
+import net.qilla.fired.weapon.magazine.MagazineClass;
 import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
@@ -22,6 +23,7 @@ public abstract class PistolMagazine extends MagazineImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine"))
                     .rarity(Rarity.COMMON_I)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.COPPER_INGOT, 1))
+                    .magazineClass(MagazineClass.PISTOL)
                     .bulletClass(BulletClass.PISTOL)
                     .capacity(10)
                     .reloadSpeed(750)
@@ -35,6 +37,7 @@ public abstract class PistolMagazine extends MagazineImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine"))
                     .rarity(Rarity.COMMON_III)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.COPPER_INGOT, 1))
+                    .magazineClass(MagazineClass.PISTOL)
                     .bulletClass(BulletClass.PISTOL)
                     .capacity(20)
                     .reloadSpeed(650)
@@ -48,6 +51,7 @@ public abstract class PistolMagazine extends MagazineImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine Drum"))
                     .rarity(Rarity.RARE_II)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.HOPPER_MINECART, 1))
+                    .magazineClass(MagazineClass.PISTOL)
                     .bulletClass(BulletClass.PISTOL)
                     .capacity(60)
                     .reloadSpeed(50)

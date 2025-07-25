@@ -3,6 +3,7 @@ package net.qilla.fired.weapon.magazine.implementation;
 import net.kyori.adventure.text.Component;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
+import net.qilla.fired.weapon.magazine.MagazineClass;
 import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import org.bukkit.entity.Player;
@@ -29,6 +30,8 @@ public interface Magazine {
     @Nullable Bullet viewNextBullet();
 
     long getReloadSpeed();
+
+    @NotNull MagazineClass getMagazineClass();
 
     @NotNull BulletClass getBulletClass();
 

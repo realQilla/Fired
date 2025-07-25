@@ -17,7 +17,6 @@ import net.qilla.fired.misc.NKey;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
 import net.qilla.fired.weapon.visualstats.BulletStat;
-import net.qilla.fired.weapon.visualstats.StatDisplay;
 import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.qlibrary.items.QStack;
 import net.qilla.qlibrary.util.QParticle;
@@ -82,7 +81,7 @@ public abstract class BulletImpl implements Bullet {
 
     @Override
     public void fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull Vector originDir, @NotNull Gun gun) {
-        Vector dir = this.calcAimCone(originDir, this.bulletSpread * gun.getAccuracy());
+        Vector dir = this.calcAimCone(originDir, this.bulletSpread * gun.getAccuracyMod());
         RayTraceResult result = originLoc.getWorld().rayTrace(builder -> builder
                 .start(originLoc)
                 .direction(dir)
@@ -131,7 +130,8 @@ public abstract class BulletImpl implements Bullet {
                 .build();
 
 
-        entity.damage(gun.getDamage() + this.getDamage(), source);
+        System.out.println("Hit " + entity.getName() + " for " + this.getDamage() * gun.getDamageMod() + " damage.");
+        entity.damage(this.getDamage() * gun.getDamageMod(), source);
         PLUGIN.getEntityDataReg().getOrCreate(entity).bleedEntity(this.bleed);
         entity.setNoDamageTicks(0);
         this.hitParticle(hitVec, entity.getWorld());

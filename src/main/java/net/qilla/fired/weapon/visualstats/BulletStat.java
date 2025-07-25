@@ -14,17 +14,16 @@ public abstract class BulletStat<T extends Number> extends StatDisplay<T> {
 
         private static final String ID = "damage";
         private static final String DISPLAY = "<!italic><white><gold>\uD83D\uDD25</gold> Damage: <gold>%value%</gold>";
-        private static final String PELT_DISPLAY = "<!italic><white><gold>\uD83D\uDD25</gold> Damage: <gold>%value%</gold> x (<dark_aqua>☄</dark_aqua> %peltCount%)";
 
-        private final int peltCount;
+        private final int pelts;
 
-        private Damage(float value, int peltCount) {
-            super(value, peltCount == 0 ? DISPLAY : PELT_DISPLAY);
-            this.peltCount = peltCount;
+        private Damage(float value, int pelts) {
+            super(value, DISPLAY);
+            this.pelts = pelts;
         }
 
-        public static @NotNull BulletStat.Damage of(float value, int peltCount) {
-            return new Damage(value, peltCount);
+        public static @NotNull BulletStat.Damage of(float value, int pelts) {
+            return new Damage(value, pelts);
         }
 
         public static @NotNull BulletStat.Damage of(float value) {
@@ -38,13 +37,15 @@ public abstract class BulletStat<T extends Number> extends StatDisplay<T> {
 
         @Override
         public @NotNull Component getFormatted() {
-            if(this.peltCount <= 1) return MiniMessage.miniMessage().deserialize(super.getDisplay().replace("%value%", NumUtil.decimalTruncation(super.getValue(), 1)));
-
             String str = super.getDisplay();
 
             str = str.replace("%value%", NumUtil.decimalTruncation(super.getValue(), 1));
-            str = str.replace("%peltCount%", String.valueOf(this.peltCount));
 
+            if(this.pelts != 1) {
+                str = str.concat(" x (<dark_aqua>☄</dark_aqua> %pelts%)");
+
+                str = str.replace("%pelts%", String.valueOf(pelts));
+            }
             return MiniMessage.miniMessage().deserialize(str);
         }
     }

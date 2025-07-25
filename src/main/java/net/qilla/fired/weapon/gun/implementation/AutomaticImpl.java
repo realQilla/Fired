@@ -11,12 +11,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class GunAutomatic extends GunImpl {
+public abstract class AutomaticImpl extends GunImpl {
 
     private final AtomicBoolean autoEngaged = new AtomicBoolean(false);
     private long lastInput = 0;
 
-    public GunAutomatic(@NotNull GunType<?> gunType, @NotNull Factory<?> factory) {
+    public AutomaticImpl(@NotNull GunType<?> gunType, @NotNull Factory<?> factory) {
         super(gunType, factory);
     }
 
@@ -31,17 +31,17 @@ public abstract class GunAutomatic extends GunImpl {
 
     @Override
     public boolean fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull ItemStack gunItem) {
-        GunAutomatic.this.autoEngaged.set(true);
+        AutomaticImpl.this.autoEngaged.set(true);
 
         new QRunnable(new QTask() {
             @Override
             public void run() {
-                if((System.currentTimeMillis() - GunAutomatic.this.lastInput) > 225) {
+                if((System.currentTimeMillis() - AutomaticImpl.this.lastInput) > 225) {
                     cancel();
                     return;
                 }
 
-                if(!GunAutomatic.super.fire(shooter, shooter.getEyeLocation(), gunItem)) {
+                if(!AutomaticImpl.super.fire(shooter, shooter.getEyeLocation(), gunItem)) {
                     cancel();
                 }
             }

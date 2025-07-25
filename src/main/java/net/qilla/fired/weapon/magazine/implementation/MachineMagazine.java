@@ -4,6 +4,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletType;
+import net.qilla.fired.weapon.magazine.MagazineClass;
 import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
@@ -23,7 +24,8 @@ public abstract class MachineMagazine extends MagazineImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>M-XX Magazine Drum"))
                     .rarity(Rarity.RARE_III)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.HOPPER_MINECART, 1))
-                    .bulletClass(BulletClass.MACHINE)
+                    .magazineClass(MagazineClass.ASSAULT)
+                    .bulletClass(BulletClass.ASSAULT)
                     .capacity(250)
                     .reloadSpeed(200)
             );
@@ -36,7 +38,8 @@ public abstract class MachineMagazine extends MagazineImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>M-XX Magazine Drum"))
                     .rarity(Rarity.LEGENDARY)
                     .itemStack(QStack.ofClean(Material.IRON_INGOT, Material.HOPPER_MINECART, 1))
-                    .bulletClass(BulletClass.MACHINE)
+                    .magazineClass(MagazineClass.MACHINE_GUN)
+                    .bulletClass(BulletClass.ASSAULT)
                     .capacity(1000)
                     .reloadSpeed(50)
                     .bullets(List.of(

@@ -14,9 +14,6 @@ public final class BulletType {
     public static final AssaultBullet A_H = register(new AssaultBullet.AHRound("a_h"));
     public static final AssaultBullet A_OS = register(new AssaultBullet.AOSRound("a_os"));
 
-    // Machine Bullets
-    public static final MachineBullet M_SD = register(new MachineBullet.MSDRound("m_sd"));
-
     // Pistol Bullets
     public static final PistolBullet P_SD = register(new PistolBullet.PSDRound("p_sd"));
 

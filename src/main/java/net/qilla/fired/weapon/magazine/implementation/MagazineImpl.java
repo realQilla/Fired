@@ -11,6 +11,7 @@ import net.qilla.fired.misc.NKey;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletRegistry;
+import net.qilla.fired.weapon.magazine.MagazineClass;
 import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import net.qilla.qlibrary.items.QStack;
@@ -40,6 +41,7 @@ public abstract class MagazineImpl implements Magazine {
 
     private final String uuid;
     private final MagazineType<?> magazineType;
+    private final MagazineClass magazineClass;
     private final BulletClass bulletClass;
     private final int capacity;
     private final long reloadSpeed;
@@ -54,6 +56,7 @@ public abstract class MagazineImpl implements Magazine {
     public MagazineImpl(@NotNull MagazineType<?> magazineType, @NotNull MagazineImpl.Factory factory) {
         this.uuid = UUID.randomUUID().toString();
         this.magazineType = magazineType;
+        this.magazineClass = factory.magazineClass;
         this.bulletClass = factory.bulletClass;
         this.capacity = factory.capacity;
         this.reloadSpeed = factory.reloadSpeed;
@@ -149,6 +152,11 @@ public abstract class MagazineImpl implements Magazine {
     @Override
     public long getReloadSpeed() {
         return this.reloadSpeed;
+    }
+
+    @Override
+    public @NotNull MagazineClass getMagazineClass() {
+        return this.magazineClass;
     }
 
     @Override
@@ -264,6 +272,7 @@ public abstract class MagazineImpl implements Magazine {
 
     public static final class Factory {
 
+        private MagazineClass magazineClass;
         private BulletClass bulletClass;
         private int capacity;
         private long reloadSpeed;
@@ -275,6 +284,7 @@ public abstract class MagazineImpl implements Magazine {
         private ItemStack itemStack;
 
         public Factory() {
+            this.magazineClass = MagazineClass.PISTOL;
             this.bulletClass = BulletClass.PISTOL;
             this.capacity = 20;
             this.reloadSpeed = 100;
@@ -284,6 +294,12 @@ public abstract class MagazineImpl implements Magazine {
             this.name = MiniMessage.miniMessage().deserialize("<!italic><blue>Magazine");
             this.lore = List.of();
             this.itemStack = QStack.ofClean(Material.NETHERITE_INGOT, Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, 1);
+        }
+
+        public @NotNull Factory magazineClass(@NotNull MagazineClass magazineClass) {
+            Preconditions.checkNotNull(magazineClass, "Magazine Class cannot be null.");
+            this.magazineClass = magazineClass;
+            return this;
         }
 
         public @NotNull Factory bulletClass(@NotNull BulletClass bulletClass) {

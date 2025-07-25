@@ -4,7 +4,6 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
 import net.qilla.fired.weapon.visualstats.BulletStat;
-import net.qilla.fired.weapon.visualstats.StatDisplay;
 import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Location;
@@ -44,8 +43,8 @@ public abstract class ShellBullet extends BulletImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>S-SD Shell"))
                     .itemStack(QStack.ofClean(Material.ARMADILLO_SCUTE))
                     .bulletClass(BulletClass.SHELL)
-                    .damage(0.75f)
-                    .range(32)
+                    .damage(4.5f)
+                    .range(48)
                     .bulletSpread(15.0)
                     .bleed(1.25f)
                     .scale(0)
@@ -60,8 +59,8 @@ public abstract class ShellBullet extends BulletImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>S-S Slug"))
                     .itemStack(QStack.ofClean(Material.ARMADILLO_SCUTE))
                     .bulletClass(BulletClass.SHELL)
-                    .damage(18.0f)
-                    .range(128)
+                    .damage(24.0f)
+                    .range(96)
                     .bulletSpread(2.0)
                     .bleed(4.0f)
                     .scale(0)

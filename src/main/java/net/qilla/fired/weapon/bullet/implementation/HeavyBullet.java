@@ -19,7 +19,7 @@ public abstract class HeavyBullet extends BulletImpl {
                     .name(MiniMessage.miniMessage().deserialize("<white>H-SD Round"))
                     .itemStack(QStack.ofClean(Material.GHAST_TEAR))
                     .bulletClass(BulletClass.HEAVY)
-                    .damage(2.0f)
+                    .damage(40.0f)
                     .range(192)
                     .bulletSpread(0.25)
                     .bleed(8.0f)

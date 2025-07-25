@@ -3,6 +3,7 @@ package net.qilla.fired.weapon.gun.implementation;
 import net.kyori.adventure.text.Component;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
+import net.qilla.fired.weapon.magazine.MagazineClass;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.GunType;
 import net.qilla.fired.weapon.visualstats.StatHolder;
@@ -50,11 +51,11 @@ public interface Gun {
 
     @NotNull GunType<?> getType();
 
-    @NotNull BulletClass getBulletClass();
+    @NotNull MagazineClass getMagazineClass();
 
-    float getDamage();
+    double getDamageMod();
 
-    double getAccuracy();
+    double getAccuracyMod();
 
     int getFireCD();
 
