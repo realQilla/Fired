@@ -5,20 +5,16 @@ import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletType;
 import net.qilla.fired.weapon.magazine.MagazineClass;
-import net.qilla.fired.weapon.magazine.MagazineType;
+import net.qilla.fired.weapon.magazine.DynamicMagazineType;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
-public abstract class PistolMagazine extends MagazineImpl {
+public abstract class PistolMagazine {
 
-    public PistolMagazine(@NotNull MagazineType<?> magazineType, @NotNull Factory factory) {
-        super(magazineType, factory);
-    }
-
-    public static final class Magazine10 extends PistolMagazine {
-        public Magazine10(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine10 extends MagazineDynamic {
+        public Magazine10(@NotNull DynamicMagazineType<?> magazineType) {
             super(magazineType, new Factory()
                     .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine"))
                     .rarity(Rarity.COMMON_I)
@@ -31,8 +27,8 @@ public abstract class PistolMagazine extends MagazineImpl {
         }
     }
 
-    public static final class Magazine20 extends PistolMagazine {
-        public Magazine20(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine20 extends MagazineDynamic {
+        public Magazine20(@NotNull DynamicMagazineType<?> magazineType) {
             super(magazineType, new Factory()
                     .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine"))
                     .rarity(Rarity.COMMON_III)
@@ -45,8 +41,8 @@ public abstract class PistolMagazine extends MagazineImpl {
         }
     }
 
-    public static final class Magazine60 extends PistolMagazine {
-        public Magazine60(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine60 extends MagazineDynamic {
+        public Magazine60(@NotNull DynamicMagazineType<?> magazineType) {
             super(magazineType, new Factory()
                     .name(MiniMessage.miniMessage().deserialize("<white>P-XX Magazine Drum"))
                     .rarity(Rarity.RARE_II)

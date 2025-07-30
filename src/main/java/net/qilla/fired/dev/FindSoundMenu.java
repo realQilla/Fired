@@ -11,6 +11,7 @@ import net.qilla.qlibrary.menu.socket.Socket;
 import net.qilla.qlibrary.player.CooldownType;
 import net.qilla.qlibrary.util.QSound;
 import net.qilla.qlibrary.util.QSounds;
+import net.qilla.qlibrary.util.tools.NumUtil;
 import net.qilla.qlibrary.util.tools.PlayerUtil;
 import net.qilla.qlibrary.util.tools.StringUtil;
 import org.bukkit.Material;
@@ -29,8 +30,58 @@ public class FindSoundMenu extends QSearchMenu<Sound> {
             .sorted(Comparator.comparing(Object::toString))
             .toList();
 
+    private float pitch = 1.0f;
+
     public FindSoundMenu(@NotNull Plugin plugin, @NotNull QSessionData playerData) {
         super(plugin, playerData, SOUND_SET);
+
+        super.addSocket(this.lowerSocket());
+        super.addSocket(this.raiseSocket());
+
+        super.populateModular();
+        super.finalizeMenu();
+    }
+
+    private @NotNull Socket lowerSocket() {
+        return new QSocket(50, QSlot.of(builder -> builder
+                .material(Material.RED_STAINED_GLASS)
+                .displayName(MiniMessage.miniMessage().deserialize("<dark_green>Lower Pitch"))
+                .lore(ItemLore.lore(List.of(
+                        MiniMessage.miniMessage().deserialize("<!italic><gray>Current value <white>" + NumUtil.decimalTruncation(this.pitch, 1)),
+                        Component.empty(),
+                        MiniMessage.miniMessage().deserialize("<!italic><yellow><gold><key:key.mouse.left></gold> to lower pitch")
+                )))
+                .clickSound(QSounds.Menu.MENU_CLICK_ITEM)
+                .appearSound(QSounds.Menu.MENU_ITEM_APPEAR)
+        ), (event) -> {
+            float amount = event.isShiftClick() ? 1.0f : 0.1f;
+
+            this.pitch = Math.max(0, this.pitch - amount);
+            super.addSocket(this.raiseSocket());
+            super.addSocket(this.lowerSocket());
+            return true;
+        }, CooldownType.MENU_CLICK);
+    }
+
+    private @NotNull Socket raiseSocket() {
+        return new QSocket(51, QSlot.of(builder -> builder
+                .material(Material.LIME_STAINED_GLASS)
+                .displayName(MiniMessage.miniMessage().deserialize("<dark_green>Raise Pitch"))
+                .lore(ItemLore.lore(List.of(
+                        MiniMessage.miniMessage().deserialize("<!italic><gray>Current value <white>" + NumUtil.decimalTruncation(this.pitch, 1)),
+                        Component.empty(),
+                        MiniMessage.miniMessage().deserialize("<!italic><yellow><gold><key:key.mouse.left></gold> to raise pitch")
+                )))
+                .clickSound(QSounds.Menu.MENU_CLICK_ITEM)
+                .appearSound(QSounds.Menu.MENU_ITEM_APPEAR)
+        ), (event) -> {
+            float amount = event.isShiftClick() ? 1.0f : 0.1f;
+
+            this.pitch = Math.min(2, this.pitch + amount);
+            super.addSocket(this.raiseSocket());
+            super.addSocket(this.lowerSocket());
+            return true;
+        }, CooldownType.MENU_CLICK);
     }
 
     @Override
@@ -45,7 +96,7 @@ public class FindSoundMenu extends QSearchMenu<Sound> {
                 .clickSound(QSounds.Menu.MENU_CLICK_ITEM)
         ), event -> {
             super.getPlayer().stopAllSounds();
-            PlayerUtil.Sound.player(super.getPlayer(), QSound.of(sound, 1f, 0.5f, SoundCategory.UI), 1);
+            PlayerUtil.Sound.player(super.getPlayer(), QSound.of(sound, pitch, 0.5f, SoundCategory.UI), 0);
             return false;
         }, CooldownType.MENU_CLICK);
     }

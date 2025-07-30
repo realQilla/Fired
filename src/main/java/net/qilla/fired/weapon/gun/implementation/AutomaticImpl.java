@@ -21,12 +21,12 @@ public abstract class AutomaticImpl extends GunImpl {
     }
 
     @Override
-    public boolean attemptFire(@NotNull Player holder, @NotNull ItemStack gunItem) {
+    public boolean preFire(@NotNull Player holder, @NotNull ItemStack gunItem) {
         this.lastInput = System.currentTimeMillis();
 
         if(this.autoEngaged.get()) return false;
 
-        return super.attemptFire(holder, gunItem);
+        return super.preFire(holder, gunItem);
     }
 
     @Override
@@ -38,6 +38,7 @@ public abstract class AutomaticImpl extends GunImpl {
             public void run() {
                 if((System.currentTimeMillis() - AutomaticImpl.this.lastInput) > 225) {
                     cancel();
+                    
                     return;
                 }
 

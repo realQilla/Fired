@@ -4,10 +4,12 @@ import io.papermc.paper.persistence.PersistentDataContainerView;
 import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
 import net.qilla.fired.player.data.EntityDataRegistry;
+import net.qilla.fired.weapon.bullet.BulletRegistry;
 import net.qilla.fired.weapon.magazine.LiveMagazineRegistry;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.implementation.Gun;
 import net.qilla.fired.weapon.gun.LiveGunRegistry;
+import net.qilla.fired.weapon.magazine.implementation.MagazineDynamic;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,11 +28,13 @@ public final class WeaponEvents implements Listener {
     private final EntityDataRegistry entityDataReg;
     private final LiveGunRegistry liveGunReg;
     private final LiveMagazineRegistry liveMagazineReg;
+    private final BulletRegistry bulletRegistry;
 
     public WeaponEvents(@NotNull Fired fired) {
         this.entityDataReg = fired.getEntityDataReg();
         this.liveGunReg = fired.getLiveGunReg();
         this.liveMagazineReg = fired.getLiveMagazineReg();
+        this.bulletRegistry = fired.getBulletReg();
     }
 
 
@@ -54,7 +58,31 @@ public final class WeaponEvents implements Listener {
 
         if(!event.getAction().isRightClick()) return;
 
-        gun.attemptFire(player, gunItem);
+        gun.preFire(player, gunItem);
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    private void loadWeapon(InventoryClickEvent event) {
+        if(event.getClickedInventory() == null) return;
+
+        ItemStack loadItem = event.getCursor();
+        ItemStack heldItem = event.getCurrentItem();
+
+        if(!event.getClick().isRightClick() || heldItem == null) return;
+
+        String gunID = heldItem.getPersistentDataContainer()
+                .get(NKey.GUN, PersistentDataType.STRING);
+
+        if(gunID == null) return;
+
+        Gun gun = this.liveGunReg.getGun(gunID);
+
+        if(gun == null) return;
+
+        Player player = (Player) event.getWhoClicked();
+
+        gun.loadIntoGun(player, heldItem, loadItem);
         event.setCancelled(true);
     }
 
@@ -62,73 +90,49 @@ public final class WeaponEvents implements Listener {
     private void loadMagazine(InventoryClickEvent event) {
         if(event.getClickedInventory() == null) return;
 
-        ItemStack magazineItem = event.getCursor();
-        ItemStack gunItem = event.getCurrentItem();
+        ItemStack heldItem = event.getCurrentItem();
+        ItemStack loadItem = event.getCursor();
 
-        if(!event.getClick().isRightClick() || gunItem == null) return;
+        if(!event.getClick().isRightClick() || heldItem == null) return;
 
-        PersistentDataContainerView magPDC = magazineItem.getPersistentDataContainer();
-        PersistentDataContainerView gunPDC = gunItem.getPersistentDataContainer();
+        String magazineID = heldItem.getPersistentDataContainer()
+                .get(NKey.MAGAZINE, PersistentDataType.STRING);
 
-        String magID = magPDC.get(NKey.MAGAZINE, PersistentDataType.STRING);
-        String gunID = gunPDC.get(NKey.GUN, PersistentDataType.STRING);
-
-        if(gunID == null) return;
-        Gun gun = this.liveGunReg.getGun(gunID);
-
-        if(gun == null) return;
-
-        Magazine magazine = null;
-
-        if(magID != null) magazine = this.liveMagazineReg.getMag(magID);
+        if(magazineID == null) return;
 
         Player player = (Player) event.getWhoClicked();
+        Magazine magazine = this.liveMagazineReg.getMag(magazineID);
 
-        gun.attemptLoad(player, gunItem, magazineItem, magazine);
-        event.setCancelled(true);
-    }
-
-    @EventHandler
-    private void loadBullets(InventoryClickEvent event) {
-        if(event.getClickedInventory() == null) return;
-
-        ItemStack magItem = event.getCurrentItem();
-        ItemStack bulletItem = event.getCursor();
-
-        if(!event.getClick().isRightClick() || magItem == null) return;
-
-        PersistentDataContainerView magPDC = magItem.getPersistentDataContainer();
-
-        String magID = magPDC.get(NKey.MAGAZINE, PersistentDataType.STRING);
-
-        if(magID == null) return;
-
-        Magazine mag = this.liveMagazineReg.getMag(magID);
-        Player player = (Player) event.getWhoClicked();
-
-        if(mag != null) {
-            mag.attemptLoad(player, magItem, bulletItem);
-            if(event.getSlot() < 9) player.getInventory().setHeldItemSlot(event.getSlot());
-        }
+        if(magazine != null) magazine.loadToQueue(player, heldItem, loadItem);
         event.setCancelled(true);
     }
 
     @EventHandler
     private void resumeLoadBullets(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
-        ItemStack magItem = player.getInventory().getItem(event.getNewSlot());
+        ItemStack heldItem = player.getInventory().getItem(event.getNewSlot());
 
-        if(magItem == null) return;
+        if(heldItem == null) return;
 
-        String magID = magItem.getPersistentDataContainer().get(NKey.MAGAZINE, PersistentDataType.STRING);
+        String magazineID = heldItem.getPersistentDataContainer().get(NKey.MAGAZINE, PersistentDataType.STRING);
 
-        if(magID == null) return;
+        if(magazineID != null) {
+            MagazineDynamic magazine = this.liveMagazineReg.getMag(magazineID);
 
-        Magazine mag = this.liveMagazineReg.getMag(magID);
+            if(magazine != null) magazine.loadIntoMagazine(player, heldItem);
+        }
 
-        if(mag == null || !mag.hasQueuedBullets()) return;
+        String gunID = heldItem.getPersistentDataContainer().get(NKey.GUN, PersistentDataType.STRING);
 
-        mag.load(player, magItem);
+        if(gunID != null) {
+            Gun gun = this.liveGunReg.getGun(gunID);
+
+            if(gun != null) {
+                Magazine magazine = gun.getMagazine();
+
+                if(magazine != null) magazine.loadIntoMagazine(player, heldItem);
+            }
+        }
     }
 
     @EventHandler

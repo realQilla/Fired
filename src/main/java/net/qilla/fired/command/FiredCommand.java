@@ -16,6 +16,7 @@ import net.qilla.fired.weapon.gun.implementation.Gun;
 import net.qilla.fired.weapon.gun.GunRegistry;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
+import net.qilla.fired.weapon.magazine.implementation.MagazineDynamic;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +157,7 @@ public final class FiredCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        final Magazine mag = magazineRegistry.createNew(selection);
+        final MagazineDynamic mag = magazineRegistry.createNew(selection);
 
         if(mag == null) {
             return Command.SINGLE_SUCCESS;

@@ -1,26 +1,17 @@
 package net.qilla.fired.weapon.magazine.implementation;
 
 import com.google.common.base.Preconditions;
-import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.ItemLore;
-import io.papermc.paper.persistence.PersistentDataContainerView;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
-import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletRegistry;
 import net.qilla.fired.weapon.magazine.MagazineClass;
-import net.qilla.fired.weapon.magazine.MagazineType;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
-import net.qilla.qlibrary.items.QStack;
 import net.qilla.qlibrary.util.QSound;
-import net.qilla.qlibrary.util.tools.NumUtil;
-import net.qilla.qlibrary.util.tools.PlayerUtil;
-import net.qilla.qlibrary.util.tools.QRunnable;
-import net.qilla.qlibrary.util.tools.QTask;
-import org.bukkit.*;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -28,130 +19,87 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public abstract class MagazineImpl implements Magazine {
 
-    private static final Plugin PLUGIN = Fired.getInstance();
     private static final BulletRegistry BULLET_REGISTRY = BulletRegistry.getInstance();
 
-    private static final QSound LOAD_ROUND = QSound.of(Sound.BLOCK_COPPER_BULB_TURN_ON, 2.0f, 0.85f, SoundCategory.PLAYERS);
-    private static final QSound COMPLETE_LOAD = QSound.of(Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1.5f, 0.33f, SoundCategory.PLAYERS);
+    static final QSound LOAD_ROUND = QSound.of(Sound.BLOCK_COPPER_BULB_TURN_ON, 2.0f, 0.85f, SoundCategory.PLAYERS);
+    static final QSound COMPLETE_LOAD = QSound.of(Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1.5f, 0.33f, SoundCategory.PLAYERS);
+
+    private static final Plugin PLUGIN = Fired.getInstance();
 
     private final String uuid;
-    private final MagazineType<?> magazineType;
     private final MagazineClass magazineClass;
     private final BulletClass bulletClass;
     private final int capacity;
     private final long reloadSpeed;
     private final Queue<Bullet> queuedBullets;
     private final Deque<Bullet> loadedBullets;
+    private boolean locked;
 
-    private final Rarity rarity;
-    private final Component name;
-    private final List<Component> lore;
-    private final ItemStack itemStack;
-
-    public MagazineImpl(@NotNull MagazineType<?> magazineType, @NotNull MagazineImpl.Factory factory) {
-        this.uuid = UUID.randomUUID().toString();
-        this.magazineType = magazineType;
+    public MagazineImpl(@NotNull String uuid, @NotNull MagazineImpl.Factory<?> factory) {
+        Preconditions.checkNotNull(uuid, "UUID cannot be null.");
+        Preconditions.checkNotNull(factory, "Builder cannot be null.");
+        this.uuid = uuid;
         this.magazineClass = factory.magazineClass;
         this.bulletClass = factory.bulletClass;
         this.capacity = factory.capacity;
         this.reloadSpeed = factory.reloadSpeed;
         this.loadedBullets = factory.bullets;
         this.queuedBullets = new LinkedList<>();
-
-        this.rarity = factory.rarity;
-        this.name = factory.name;
-        this.lore = factory.lore;
-        this.itemStack = factory.itemStack;
     }
 
     @Override
-    public @NotNull String getUUID() {
-        return this.uuid;
-    }
-
-    @Override
-    public boolean attemptLoad(@NotNull Player player, @NotNull ItemStack magItem, @NotNull ItemStack bulletItem) {
-        if(bulletItem.isEmpty() || this.isMagazineFull() || !this.queuedBullets.isEmpty()) return false;
-
-        PersistentDataContainerView bulletPDC = bulletItem.getPersistentDataContainer();
-
-        String bulletID = bulletPDC.get(NKey.BULLET, PersistentDataType.STRING);
+    public boolean loadToQueue(@NotNull Player holder, @NotNull ItemStack heldItem, @NotNull ItemStack loadItem) {
+        String bulletID = loadItem.getPersistentDataContainer()
+                .get(NKey.BULLET, PersistentDataType.STRING);
 
         if(bulletID == null) return false;
 
         Bullet bullet = BULLET_REGISTRY.get(bulletID);
 
-        if(bullet == null || this.bulletClass != bullet.getBulletClass()) return false;
+        if(bullet == null) return false;
 
-        int couldFit = this.capacity - (this.getLoadedBulletsSize() + this.getQueuedBulletsSize());
-        int itemAmount = bulletItem.getAmount();
+        if(this.isMagazineFull() || this.bulletClass != bullet.getBulletClass()) return false;
+
+        int couldFit = this.capacity - (this.getMagazineAmount() + this.getQueuedBulletAmount());
+        int itemAmount = loadItem.getAmount();
         int usedAmount = Math.min(itemAmount, couldFit);
 
-        bulletItem.setAmount(Math.max(0, itemAmount - usedAmount));
+        loadItem.setAmount(Math.max(0, itemAmount - usedAmount));
 
         for(int i = 0; i < usedAmount; i++) {
             this.queuedBullets.add(bullet);
         }
 
-        MagazineImpl.this.updateItem(magItem);
-        this.load(player, magItem);
+        this.loadIntoMagazine(holder, heldItem);
         return true;
     }
 
-    @Override
-    public void load(@NotNull Player player, @NotNull ItemStack magItem) {
-        new QRunnable(new QTask() {
-            @Override
-            public void run() {
-                if(magItem.isEmpty() || MagazineImpl.this.isMagazineFull() || !Objects.equals(player.getInventory().getItemInMainHand().getPersistentDataContainer().get(NKey.MAGAZINE, PersistentDataType.STRING), MagazineImpl.this.uuid)) {
-                    cancel();
-                    return;
-                }
-
-                Bullet bullet = MagazineImpl.this.queuedBullets.poll();
-                MagazineImpl.this.loadedBullets.push(bullet);
-                PlayerUtil.Sound.loc(player, MagazineImpl.LOAD_ROUND, 0.2f);
-                MagazineImpl.this.updateItem(magItem);
-
-                if(MagazineImpl.this.queuedBullets.isEmpty()) {
-                    PlayerUtil.Sound.loc(player, MagazineImpl.COMPLETE_LOAD, 0.2f);
-                    cancel();
-                    return;
-                }
-            }
-        }, this.capacity).runSync(PLUGIN, Executors.newSingleThreadScheduledExecutor(),250, this.reloadSpeed, TimeUnit.MILLISECONDS);
+    public void loadFromQueueToMagazine(@Nullable Bullet bullet) {
+        this.loadedBullets.push(bullet);
     }
 
     @Override
-    public @Nullable Bullet pullBullet() {
-        if(this.isMagazineEmpty()) return null;
-
-        return this.loadedBullets.pop();
-    }
-
-    @Override
-    public void updateItem(@NotNull ItemStack itemStack) {
-        itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(this.getLore()));
-    }
-
-    @Override
-    public @NotNull MagazineType<?> getMagazineType() {
-        return this.magazineType;
-    }
-
-    @Override
-    public @Nullable Bullet viewNextBullet() {
+    public @Nullable Bullet peekNextBullet() {
         return this.loadedBullets.peek();
     }
 
     @Override
-    public long getReloadSpeed() {
-        return this.reloadSpeed;
+    public @Nullable Bullet pullNextBullet() {
+        if(this.isMagazineEmpty()) return null;
+        return this.loadedBullets.pop();
+    }
+
+    @Override
+    public @Nullable Bullet pullNextQueuedBullet() {
+        return this.queuedBullets.poll();
+    }
+
+    @Override
+    public @NotNull String getUUID() {
+        return this.uuid;
     }
 
     @Override
@@ -165,28 +113,33 @@ public abstract class MagazineImpl implements Magazine {
     }
 
     @Override
-    public int getCapacity() {
+    public int getMagazineCapacity() {
         return this.capacity;
     }
 
     @Override
-    public int getLoadedBulletsSize() {
+    public long getReloadSpeed() {
+        return this.reloadSpeed;
+    }
+
+    @Override
+    public int getMagazineAmount() {
         return this.loadedBullets.size();
     }
 
     @Override
-    public int getQueuedBulletsSize() {
+    public int getQueuedBulletAmount() {
         return this.queuedBullets.size();
     }
 
     @Override
     public boolean isMagazineFull() {
-        return this.getLoadedBulletsSize() >= this.capacity;
+        return this.getMagazineAmount() >= this.capacity;
     }
 
     @Override
-    public boolean hasQueuedBullets() {
-        return !this.queuedBullets.isEmpty();
+    public boolean isBulletQueueEmpty() {
+        return this.queuedBullets.isEmpty();
     }
 
     @Override
@@ -195,40 +148,15 @@ public abstract class MagazineImpl implements Magazine {
     }
 
     @Override
-    public @NotNull Rarity getRarity() {
-        return this.rarity;
-    }
+    public Component buildAmmoStatus() {
+        StringBuilder ammoLine = new StringBuilder("<!italic><white><yellow>\uD83E\uDEA3</yellow> ");
+        String symbol = this.getMagazineCapacity() <= 8 ? "█" : this.getMagazineCapacity() <= 32 ? "▌" : "|";
 
-    @Override
-    public @NotNull Component getName() {
-        return this.name;
-    }
+        String ammoColor = this.getMagazineAmount() < (this.getMagazineCapacity() / 4) ? "<red>" : "<white>";
 
-    @Override
-    public @NotNull List<Component> getLore() {
-        List<Component> lore = new ArrayList<>();
-
-        if(this.hasQueuedBullets()) {
-            lore.add(MiniMessage.miniMessage().deserialize("<!italic><gold><bold>LOADING REQUIRED</bold></gold>"));
-        } else if(this.isMagazineEmpty()) {
-            lore.add(MiniMessage.miniMessage().deserialize("<!italic><red><bold>EMPTY</red>"));
-        } else if(this.isMagazineFull()) {
-            lore.add(MiniMessage.miniMessage().deserialize("<!italic><green><bold>FULL</green>"));
-        }
-        lore.add(Component.empty());
-
-        lore.add(MiniMessage.miniMessage().deserialize("<!italic><white><gold>⚓ Capacity: </gold>" + NumUtil.numberComma(this.getCapacity())));
-
-        lore.add(Component.empty());
-
-        StringBuilder ammoLine = new StringBuilder("<!italic><white><yellow>\uD83E\uDEA3 Ammo</yellow>: ");
-        String symbol = this.getCapacity() <= 8 ? "█" : this.getCapacity() <= 32 ? "▌" : "|";
-
-        String ammoColor = this.getLoadedBulletsSize() < (this.capacity / 4) ? "<red>" : "<white>";
-
-        if(this.capacity > 40) {
-            int currentAmmoSymbols = this.getLoadedBulletsSize() % 40;
-            int remainingCapacity = this.getCapacity() - this.getLoadedBulletsSize();
+        if(this.getMagazineCapacity() > 40) {
+            int currentAmmoSymbols = this.getMagazineAmount() % 40;
+            int remainingCapacity = this.getMagazineCapacity() - this.getMagazineAmount();
             int maxAmmoSymbols = Math.min(40 - currentAmmoSymbols, remainingCapacity);
             int spaceFillerSymbols = 40 - currentAmmoSymbols - maxAmmoSymbols;
 
@@ -238,39 +166,22 @@ public abstract class MagazineImpl implements Magazine {
 
             ammoLine.append(ammoColor).append(curAmmo).append("<dark_gray>").append(maxAmmo).append("</dark_gray><dark_red>")
                     .append(spaceFiller).append("</dark_red> ")
-                    .append(this.getLoadedBulletsSize() / 40).append("/").append(this.capacity / 40);
+                    .append(this.getMagazineAmount() / 40).append("/").append(this.getMagazineCapacity() / 40);
         } else {
-            String curAmmo = new StringBuilder().repeat(symbol, this.getLoadedBulletsSize()).toString();
-            String maxAmmo = new StringBuilder().repeat(symbol, this.getCapacity() - this.getLoadedBulletsSize()).toString();
+            String curAmmo = new StringBuilder().repeat(symbol, this.getMagazineAmount()).toString();
+            String maxAmmo = new StringBuilder().repeat(symbol, this.getMagazineCapacity() - this.getMagazineAmount()).toString();
 
             ammoLine.append(ammoColor).append(curAmmo).append("</white><dark_gray>").append(maxAmmo);;
         }
 
-        lore.add(MiniMessage.miniMessage().deserialize(ammoLine.toString()));
-
-        if(!this.lore.isEmpty()) {
-            lore.add(Component.empty());
-            lore.addAll(this.lore);
-        }
-
-        lore.add(Component.empty());
-        lore.add(this.rarity.display().append(Component.text(" MAGAZINE")));
-
-        return lore;
+        return MiniMessage.miniMessage().deserialize(ammoLine.toString());
     }
 
-    @Override
-    public @NotNull ItemStack getItem() {
-        this.itemStack.setData(DataComponentTypes.ITEM_NAME, this.getName());
-        this.itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(this.getLore()));
-        this.itemStack.editMeta(meta -> {
-            meta.getPersistentDataContainer().set(NKey.MAGAZINE, PersistentDataType.STRING, this.uuid);
-        });
-
-        return this.itemStack;
+    public Plugin getPlugin() {
+        return PLUGIN;
     }
 
-    public static final class Factory {
+    public static class Factory<T extends  MagazineImpl.Factory<T>> {
 
         private MagazineClass magazineClass;
         private BulletClass bulletClass;
@@ -278,80 +189,47 @@ public abstract class MagazineImpl implements Magazine {
         private long reloadSpeed;
         private Deque<Bullet> bullets;
 
-        private Rarity rarity;
-        private Component name;
-        private List<Component> lore;
-        private ItemStack itemStack;
-
         public Factory() {
             this.magazineClass = MagazineClass.PISTOL;
             this.bulletClass = BulletClass.PISTOL;
             this.capacity = 20;
             this.reloadSpeed = 100;
             this.bullets = new LinkedList<>();
-
-            this.rarity = Rarity.COMMON_I;
-            this.name = MiniMessage.miniMessage().deserialize("<!italic><blue>Magazine");
-            this.lore = List.of();
-            this.itemStack = QStack.ofClean(Material.NETHERITE_INGOT, Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, 1);
         }
 
-        public @NotNull Factory magazineClass(@NotNull MagazineClass magazineClass) {
+        public @NotNull T magazineClass(@NotNull MagazineClass magazineClass) {
             Preconditions.checkNotNull(magazineClass, "Magazine Class cannot be null.");
             this.magazineClass = magazineClass;
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory bulletClass(@NotNull BulletClass bulletClass) {
+        public @NotNull T bulletClass(@NotNull BulletClass bulletClass) {
             Preconditions.checkNotNull(bulletClass, "Weapon Class cannot be null.");
 
             this.bulletClass = bulletClass;
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory capacity(int capacity) {
+        public @NotNull T capacity(int capacity) {
             this.capacity = Math.max(0, capacity);
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory reloadSpeed(long reloadSpeed) {
+        public @NotNull T reloadSpeed(long reloadSpeed) {
             this.reloadSpeed = Math.max(0, reloadSpeed);
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory bullets(@NotNull List<Bullet> bullets) {
+        public @NotNull T bullets(@NotNull List<Bullet> bullets) {
             Preconditions.checkNotNull(bullets, "Bullets cannot be null.");
 
             this.bullets = new LinkedList<>(bullets.subList(0, Math.min(bullets.size(), this.capacity)));
-            return this;
+            return this.self();
         }
 
-        public @NotNull Factory rarity(@NotNull Rarity rarity) {
-            Preconditions.checkNotNull(rarity, "Rarity cannot be null.");
-
-            this.rarity = rarity;
-            return this;
-        }
-
-        public @NotNull Factory name(@NotNull Component name) {
-            Preconditions.checkNotNull(name, "Name cannot be null.");
-
-            this.name = name;
-            return this;
-        }
-
-        public @NotNull Factory lore(@NotNull List<Component> lore) {
-            Preconditions.checkNotNull(lore, "Lore cannot be null.");
-
-            this.lore = lore;
-            return this;
-        }
-
-        public @NotNull Factory itemStack(@NotNull ItemStack itemStack) {
-            Preconditions.checkNotNull(itemStack, "Item cannot be null.");
-
-            this.itemStack = itemStack;
-            return this;
+        @SuppressWarnings("unchecked")
+        public T self() {
+            return (T)this;
         }
     }
 }

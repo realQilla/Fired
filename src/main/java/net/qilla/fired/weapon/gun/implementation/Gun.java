@@ -2,10 +2,9 @@ package net.qilla.fired.weapon.gun.implementation;
 
 import net.kyori.adventure.text.Component;
 import net.qilla.fired.weapon.Rarity;
-import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.magazine.MagazineClass;
-import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.GunType;
+import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.qlibrary.util.QSound;
 import org.bukkit.Location;
@@ -21,7 +20,7 @@ import java.util.List;
 
 public interface Gun {
 
-    boolean attemptFire(@NotNull Player holder, @NotNull ItemStack gunItem);
+    boolean preFire(@NotNull Player holder, @NotNull ItemStack gunItem);
 
     boolean fire(@NotNull Player holder, @NotNull Location loc, @NotNull ItemStack gunItem);
 
@@ -29,13 +28,9 @@ public interface Gun {
 
     void hitEntity(@NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec);
 
-    boolean attemptLoad(@NotNull Player holder, @NotNull ItemStack gunItem, @NotNull ItemStack magazineItem, @Nullable Magazine magazine);
-
-    boolean load(@NotNull Player holder, @NotNull ItemStack gunItem, @NotNull ItemStack magazineItem, @NotNull Magazine magazine);
-
     @Nullable Magazine getMagazine();
 
-    @Nullable ItemStack getMagazineItem();
+    boolean loadIntoGun(@NotNull Player holder, @NotNull ItemStack heldItem, @NotNull ItemStack loadItem);
 
     @NotNull String getUUID();
 
@@ -59,11 +54,7 @@ public interface Gun {
 
     int getFireCD();
 
-    @NotNull StatHolder buildStats();
+    @NotNull StatHolder buildWeaponStats();
 
     @NotNull QSound getFireSound();
-
-    @NotNull QSound getLoadSound();
-
-    @NotNull QSound getUnloadSound();
 }

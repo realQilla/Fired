@@ -42,8 +42,8 @@ public abstract class BurstImpl extends GunImpl {
     }
 
     @Override
-    public @NotNull StatHolder buildStats() {
-        StatHolder statHolder = super.buildStats();
+    public @NotNull StatHolder buildWeaponStats() {
+        StatHolder statHolder = super.buildWeaponStats();
 
         statHolder.set(GunStat.FireRate.of(super.getFireCD(), this.burstCount));
 

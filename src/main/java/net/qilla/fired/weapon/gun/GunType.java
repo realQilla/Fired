@@ -30,6 +30,8 @@ public final class GunType<T extends Gun> {
     // Shot Guns
     public static final GunType<Shotgun.Graveshot> SHOTGUN_GRAVESHOT = register("s_graveshot", Shotgun.Graveshot::new);
     public static final GunType<Shotgun.ShotgunForge12> SHOTGUN_FORGE12 = register("s_forge12", Shotgun.ShotgunForge12::new);
+    public static final GunType<Shotgun.DoubleBarrel> SHOTGUN_DOUBLE_BARREL = register("s_double_barrel", Shotgun.DoubleBarrel::new);
+    public static final GunType<Shotgun.Pump> SHOTGUN_PUMP = register("s_pump", Shotgun.Pump::new);
 
     private final GunType.GunFactory<T> factory;
 

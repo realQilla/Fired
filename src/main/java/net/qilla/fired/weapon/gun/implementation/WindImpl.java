@@ -30,7 +30,7 @@ public abstract class WindImpl extends AutomaticImpl {
     }
 
     @Override
-    public boolean attemptFire(@NotNull Player holder, @NotNull ItemStack gunItem) {
+    public boolean preFire(@NotNull Player holder, @NotNull ItemStack gunItem) {
         Preconditions.checkNotNull(holder, "Player cannot be null!");
         Preconditions.checkNotNull(gunItem, "Gun Item cannot be null!");
 

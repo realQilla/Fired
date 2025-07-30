@@ -5,21 +5,17 @@ import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletType;
 import net.qilla.fired.weapon.magazine.MagazineClass;
-import net.qilla.fired.weapon.magazine.MagazineType;
+import net.qilla.fired.weapon.magazine.DynamicMagazineType;
 import net.qilla.qlibrary.items.QStack;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class MachineMagazine extends MagazineImpl {
+public abstract class MachineMagazine {
 
-    public MachineMagazine(@NotNull MagazineType<?> magazineType, @NotNull Factory factory) {
-        super(magazineType, factory);
-    }
-
-    public static final class Magazine250 extends MachineMagazine {
-        public Magazine250(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine250 extends MagazineDynamic {
+        public Magazine250(@NotNull DynamicMagazineType<?> magazineType) {
             super(magazineType, new Factory()
                     .name(MiniMessage.miniMessage().deserialize("<white>M-XX Magazine Drum"))
                     .rarity(Rarity.RARE_III)
@@ -32,8 +28,8 @@ public abstract class MachineMagazine extends MagazineImpl {
         }
     }
 
-    public static final class Magazine1000 extends MachineMagazine {
-        public Magazine1000(@NotNull MagazineType<?> magazineType) {
+    public static final class Magazine1000 extends MagazineDynamic {
+        public Magazine1000(@NotNull DynamicMagazineType<?> magazineType) {
             super(magazineType, new Factory()
                     .name(MiniMessage.miniMessage().deserialize("<white>M-XX Magazine Drum"))
                     .rarity(Rarity.LEGENDARY)

@@ -41,7 +41,7 @@ public abstract class BulletStat<T extends Number> extends StatDisplay<T> {
 
             str = str.replace("%value%", NumUtil.decimalTruncation(super.getValue(), 1));
 
-            if(this.pelts != 1) {
+            if(this.pelts > 1) {
                 str = str.concat(" x (<dark_aqua>☄</dark_aqua> %pelts%)");
 
                 str = str.replace("%pelts%", String.valueOf(pelts));

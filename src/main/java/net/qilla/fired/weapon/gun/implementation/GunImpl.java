@@ -11,9 +11,13 @@ import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
 import net.qilla.fired.weapon.Rarity;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
+import net.qilla.fired.weapon.gun.implementation.magazine.MagazineLogic;
+import net.qilla.fired.weapon.gun.implementation.magazine.MagazineLogicDynamic;
+import net.qilla.fired.weapon.gun.implementation.magazine.MagazineLogicStatic;
 import net.qilla.fired.weapon.magazine.MagazineClass;
-import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.gun.GunType;
+import net.qilla.fired.weapon.magazine.StaticMagazineType;
+import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.fired.weapon.visualstats.GunStat;
 import net.qilla.qlibrary.items.QStack;
@@ -29,7 +33,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.*;
 
 public abstract class GunImpl implements Gun {
@@ -41,6 +44,8 @@ public abstract class GunImpl implements Gun {
     static final QSound HIT_MARKER = QSound.of(Sound.ENTITY_FISHING_BOBBER_THROW, 2.0F, 0.5f, SoundCategory.PLAYERS);
     static final QSound DIMINISH_AMMO = QSound.of(Sound.BLOCK_IRON_TRAPDOOR_OPEN, 2.0F, 0.5F, SoundCategory.PLAYERS);
     static final QSound NO_AMMO = QSound.of(Sound.BLOCK_BAMBOO_STEP, 2.0F, 0.1F, SoundCategory.PLAYERS);
+
+    private final MagazineLogic magazineLogic;
 
     private final String uuid;
     private final GunType<?> gunType;
@@ -54,11 +59,7 @@ public abstract class GunImpl implements Gun {
     private final List<Component> description;
     private final ItemStack itemStack;
     private final QSound fireSound;
-    private final QSound loadSound;
-    private final QSound unloadSound;
 
-    private Magazine magazine;
-    private ItemStack magazineItem;
     private long lastFire;
     private long lastReload;
 
@@ -66,8 +67,8 @@ public abstract class GunImpl implements Gun {
         Preconditions.checkNotNull(gunType, "GunType cannot be null.");
         Preconditions.checkNotNull(factory, "Builder cannot be null.");
 
-        this.uuid = UUID.randomUUID().toString();
         this.gunType = gunType;
+        this.uuid = factory.uuid;
         this.magazineClass = factory.magazineClass;
         this.damageMod = factory.damageMod;
         this.accuracyMod = factory.accuracyMod;
@@ -78,27 +79,29 @@ public abstract class GunImpl implements Gun {
         this.description = factory.description;
         this.itemStack = factory.itemStack;
         this.fireSound = factory.fireSound;
-        this.loadSound = factory.loadSound;
-        this.unloadSound = factory.unloadSound;
-        this.magazine = factory.magazine;
 
-        this.magazineItem = ItemStack.empty();
+        this.magazineLogic = factory.magazineType == null ?
+                new MagazineLogicDynamic() :
+                new MagazineLogicStatic(factory.magazineType.createNew(this));
+
         this.lastFire = this.lastReload = System.currentTimeMillis();
     }
 
     @Override
-    public boolean attemptFire(@NotNull Player holder, @NotNull ItemStack gunItem) {
+    public boolean preFire(@NotNull Player holder, @NotNull ItemStack gunItem) {
         Preconditions.checkNotNull(holder, "Player cannot be null!");
         Preconditions.checkNotNull(gunItem, "Gun Item cannot be null!");
 
-        if(this.magazine == null || this.magazine.isMagazineEmpty()) {
+        Magazine magazine = this.getMagazine();
+
+        if(magazine == null || magazine.isMagazineEmpty()) {
             PlayerUtil.Sound.loc(holder.getLocation(), NO_AMMO, 0.2f);
             return false;
         }
 
         long now = System.currentTimeMillis();
 
-        if(this.lastFire > (now - this.fireCooldown)) return false;
+        if(this.lastFire > (now - this.fireCooldown) || !magazine.isBulletQueueEmpty()) return false;
         this.lastFire = now;
 
         return this.fire(holder, holder.getEyeLocation(), gunItem);
@@ -106,11 +109,13 @@ public abstract class GunImpl implements Gun {
 
     @Override
     public boolean fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull ItemStack gunItem) {
+        Magazine magazine = this.getMagazine();
+
         if(magazine == null) return false;
-        Bullet bullet = this.magazine.pullBullet();
+        Bullet bullet = magazine.pullNextBullet();
 
         if(bullet == null) return false;
-        if(this.magazine.isMagazineEmpty()) Bukkit.getScheduler().runTaskLater(PLUGIN, () -> PlayerUtil.Sound.loc(shooter, DIMINISH_AMMO, 0.2f), 5);
+        if(magazine.isMagazineEmpty()) Bukkit.getScheduler().runTaskLater(PLUGIN, () -> PlayerUtil.Sound.loc(shooter, DIMINISH_AMMO, 0.2f), 5);
 
         PlayerUtil.Sound.loc(shooter, this.fireSound, 0.2f);
 
@@ -126,49 +131,18 @@ public abstract class GunImpl implements Gun {
     }
 
     @Override
-    public boolean attemptLoad(@NotNull Player holder, @NotNull ItemStack gunItem, @NotNull ItemStack magazineItem, @Nullable Magazine magazine) {
+    public boolean loadIntoGun(@NotNull Player holder, @NotNull ItemStack heldItem, @NotNull ItemStack loadItem) {
         long curTime = System.currentTimeMillis();
 
         if(GunImpl.RELOAD_COOLDOWN > (curTime - this.lastReload)) return false;
         this.lastReload = curTime;
 
-        if(magazineItem.isEmpty() && this.magazineItem.isEmpty()) return false;
-
-        return this.load(holder, gunItem, magazineItem, magazine);
-    }
-
-    @Override
-    public boolean load(@NotNull Player holder,  @NotNull ItemStack gunItem, @NotNull ItemStack magazineItem, @Nullable Magazine magazine) {
-
-        // First: Return item in the magazine slot - if one is loaded.
-        if(!this.magazineItem.isEmpty()) {
-            if(this.magazine != null) holder.give(this.magazine.getItem());
-            else holder.give(this.magazineItem);
-            this.magazineItem = ItemStack.empty();
-            PlayerUtil.Sound.loc(holder, this.unloadSound, 0.2f);
-            // Then: Otherwise load item in cursor if one exists.
-        } else if(!magazineItem.isEmpty()) {
-            this.magazineItem = magazineItem.clone();
-            magazineItem.setAmount(0);
-            PlayerUtil.Sound.loc(holder, this.loadSound, 0.2f);
-        }
-
-        // Finally: Set the magazine field if the input magazine is valid for this gun.
-        if(magazine == null || magazine.getMagazineClass() != this.magazineClass) this.magazine = null;
-        else this.magazine = magazine;
-
-        this.updateItem(gunItem);
-        return true;
+        return this.magazineLogic.loadIntoGun(holder, this, heldItem, loadItem);
     }
 
     @Override
     public @Nullable Magazine getMagazine() {
-        return this.magazine;
-    }
-
-    @Override
-    public @Nullable ItemStack getMagazineItem() {
-        return this.magazineItem;
+        return this.magazineLogic.getMagazine();
     }
 
     @Override
@@ -205,11 +179,12 @@ public abstract class GunImpl implements Gun {
     }
 
     @Override
-    public @NotNull StatHolder buildStats() {
+    public @NotNull StatHolder buildWeaponStats() {
         StatHolder statHolder = new StatHolder();
+        Magazine magazine = this.getMagazine();
         Bullet nextBullet = null;
 
-        if(this.magazine != null) nextBullet = this.magazine.viewNextBullet();
+        if(magazine != null) nextBullet = magazine.peekNextBullet();
 
         statHolder.set(GunStat.DamageMod.of(nextBullet == null ? 0 : nextBullet.getDamage(), this.getDamageMod()));
         statHolder.set(GunStat.FireRate.of(this.fireCooldown));
@@ -222,22 +197,10 @@ public abstract class GunImpl implements Gun {
     public @NotNull List<Component> buildLore() {
         List<Component> lore = new ArrayList<>();
 
-        if(this.magazine == null) {
-            if(!this.magazineItem.isEmpty()) lore.add(MiniMessage.miniMessage().deserialize("<!italic><red><bold>MAGAZINE MALFUNCTION</red>"));
-        } else {
-            if(this.magazine.isMagazineEmpty()) lore.add(MiniMessage.miniMessage().deserialize("<!italic><red><bold>MAGAZINE EMPTY</red>"));
-            else if(this.magazine.getLoadedBulletsSize() <= this.magazine.getCapacity() / 4) lore.add(MiniMessage.miniMessage().deserialize("<!italic><gold><bold>MAGAZINE LOW</gold>"));
-            else if(this.magazine.getLoadedBulletsSize() <= this.magazine.getCapacity() / 2) lore.add(MiniMessage.miniMessage().deserialize("<!italic><yellow><bold>MAGAZINE HALF</yellow>"));
-            else lore.add(MiniMessage.miniMessage().deserialize("<!italic><green><bold>MAGAZINE FULL</green>"));
-        }
-
-        String magazineLore = this.magazine != null ? MiniMessage.miniMessage().serialize(this.magazine.getName()) :
-                this.magazineItem.isEmpty() ? "<red><bold>EMPTY</bold><red>" : MiniMessage.miniMessage().serialize(this.magazineItem.getData(DataComponentTypes.ITEM_NAME));
-
         lore.add(Component.empty());
-        lore.addAll(this.buildStats().getLore());
+        lore.addAll(this.buildWeaponStats().getLore());
         lore.add(Component.empty());
-        lore.add(MiniMessage.miniMessage().deserialize("<!italic><white><blue>☄</blue> Magazine: " + magazineLore));
+        lore.addAll(this.magazineLogic.buildLoreForGun());
 
         if(!this.description.isEmpty()) {
             lore.add(Component.empty());
@@ -292,16 +255,6 @@ public abstract class GunImpl implements Gun {
         return this.fireSound;
     }
 
-    @Override
-    public @NotNull QSound getLoadSound() {
-        return this.loadSound;
-    }
-
-    @Override
-    public @NotNull QSound getUnloadSound() {
-        return this.unloadSound;
-    }
-
     public long getLastFire() {
         return this.lastFire;
     }
@@ -324,34 +277,38 @@ public abstract class GunImpl implements Gun {
 
     public static class Factory<T extends GunImpl.Factory<T>> {
 
+        private final String uuid;
+        private StaticMagazineType<?> magazineType;
+
         private MagazineClass magazineClass;
         private double damageMod;
         private double accuracyMod;
         private int fireCooldown;
-        private Magazine magazine;
 
         private Rarity rarity;
         private Component name;
         private List<Component> description;
         private ItemStack itemStack;
         private QSound fireSound;
-        private QSound loadSound;
-        private QSound unloadSound;
 
         public Factory() {
+            this.uuid = UUID.randomUUID().toString();
             this.magazineClass = MagazineClass.PISTOL;
             this.damageMod = 1.0;
             this.accuracyMod = 1;
             this.fireCooldown = 250;
-            this.magazine = null;
+            this.magazineType = null;
 
             this.rarity = Rarity.COMMON_I;
             this.name = MiniMessage.miniMessage().deserialize("<red>Missing Field");
             this.description = List.of();
             this.itemStack = QStack.ofClean(Material.WOODEN_HOE).clearData();
             this.fireSound = QSound.of(Sound.ENTITY_IRON_GOLEM_REPAIR, 1.0F, 0.33F, SoundCategory.PLAYERS);
-            this.loadSound = QSound.of(Sound.BLOCK_CHEST_LOCKED, 2.0F, 0.25F, SoundCategory.PLAYERS);
-            this.unloadSound = QSound.of(Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1.5F, 0.35F, SoundCategory.PLAYERS);
+        }
+
+        public @NotNull T staticMagazine(@NotNull StaticMagazineType<?> magazineType) {
+            this.magazineType = magazineType;
+            return this.self();
         }
 
         /**
@@ -391,16 +348,6 @@ public abstract class GunImpl implements Gun {
             return this.self();
         }
 
-        /**
-         * The initial {@link net.qilla.fired.weapon.magazine.implementation.MagazineImpl} magazine that is loaded
-         * at creation time.
-         */
-
-        public @NotNull T magazine(@Nullable Magazine magazine) {
-            this.magazine = magazine;
-            return this.self();
-        }
-
         public @NotNull T rarity(@NotNull Rarity rarity) {
             Preconditions.checkNotNull(rarity, "Rarity cannot be null!");
             this.rarity = rarity;
@@ -428,18 +375,6 @@ public abstract class GunImpl implements Gun {
         public @NotNull T fireSound(@NotNull QSound sound) {
             Preconditions.checkNotNull(sound, "Fire sound cannot be null!");
             this.fireSound = sound;
-            return this.self();
-        }
-
-        public @NotNull T loadSound(@NotNull QSound sound) {
-            Preconditions.checkNotNull(sound, "Reload start sound cannot be null!");
-            this.loadSound = sound;
-            return this.self();
-        }
-
-        public @NotNull T unloadSound(@NotNull QSound sound) {
-            Preconditions.checkNotNull(sound, "Reload end sound cannot be null!");
-            this.unloadSound = sound;
             return this.self();
         }
 
