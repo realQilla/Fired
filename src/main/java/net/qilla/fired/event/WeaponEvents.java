@@ -28,13 +28,11 @@ public final class WeaponEvents implements Listener {
     private final EntityDataRegistry entityDataReg;
     private final LiveGunRegistry liveGunReg;
     private final LiveMagazineRegistry liveMagazineReg;
-    private final BulletRegistry bulletRegistry;
 
     public WeaponEvents(@NotNull Fired fired) {
         this.entityDataReg = fired.getEntityDataReg();
         this.liveGunReg = fired.getLiveGunReg();
         this.liveMagazineReg = fired.getLiveMagazineReg();
-        this.bulletRegistry = fired.getBulletReg();
     }
 
 

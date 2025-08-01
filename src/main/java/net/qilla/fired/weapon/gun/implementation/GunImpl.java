@@ -15,7 +15,6 @@ import net.qilla.fired.weapon.gun.implementation.magazine.MagazineLogic;
 import net.qilla.fired.weapon.gun.implementation.magazine.MagazineLogicDynamic;
 import net.qilla.fired.weapon.gun.implementation.magazine.MagazineLogicStatic;
 import net.qilla.fired.weapon.magazine.MagazineClass;
-import net.qilla.fired.weapon.gun.GunType;
 import net.qilla.fired.weapon.magazine.StaticMagazineType;
 import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.visualstats.StatHolder;
@@ -40,7 +39,6 @@ public abstract class GunImpl implements Gun {
     private static final Plugin PLUGIN = Fired.getInstance();
 
     static final int RELOAD_COOLDOWN = 750;
-    static final QSound HIT_ENTITY = QSound.of(Sound.ENTITY_FISHING_BOBBER_THROW, 1.5F, 0.5f, SoundCategory.PLAYERS);
     static final QSound HIT_MARKER = QSound.of(Sound.ENTITY_FISHING_BOBBER_THROW, 2.0F, 0.5f, SoundCategory.PLAYERS);
     static final QSound DIMINISH_AMMO = QSound.of(Sound.BLOCK_IRON_TRAPDOOR_OPEN, 2.0F, 0.5F, SoundCategory.PLAYERS);
     static final QSound NO_AMMO = QSound.of(Sound.BLOCK_BAMBOO_STEP, 2.0F, 0.1F, SoundCategory.PLAYERS);
@@ -48,9 +46,8 @@ public abstract class GunImpl implements Gun {
     private final MagazineLogic magazineLogic;
 
     private final String uuid;
-    private final GunType<?> gunType;
     private final MagazineClass magazineClass;
-    private final double damageMod;
+    private final float damageMod;
     private final double accuracyMod;
     private final int fireCooldown;
 
@@ -63,11 +60,9 @@ public abstract class GunImpl implements Gun {
     private long lastFire;
     private long lastReload;
 
-    public GunImpl(@NotNull GunType<?> gunType, @NotNull GunImpl.Factory<?> factory) {
-        Preconditions.checkNotNull(gunType, "GunType cannot be null.");
+    public GunImpl( @NotNull GunImpl.Factory<?> factory) {
         Preconditions.checkNotNull(factory, "Builder cannot be null.");
 
-        this.gunType = gunType;
         this.uuid = factory.uuid;
         this.magazineClass = factory.magazineClass;
         this.damageMod = factory.damageMod;
@@ -104,11 +99,11 @@ public abstract class GunImpl implements Gun {
         if(this.lastFire > (now - this.fireCooldown) || !magazine.isBulletQueueEmpty()) return false;
         this.lastFire = now;
 
-        return this.fire(holder, holder.getEyeLocation(), gunItem);
+        return this.fire(holder, gunItem);
     }
 
     @Override
-    public boolean fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull ItemStack gunItem) {
+    public boolean fire(@NotNull Player shooter, @NotNull ItemStack gunItem) {
         Magazine magazine = this.getMagazine();
 
         if(magazine == null) return false;
@@ -117,15 +112,17 @@ public abstract class GunImpl implements Gun {
         if(bullet == null) return false;
         if(magazine.isMagazineEmpty()) Bukkit.getScheduler().runTaskLater(PLUGIN, () -> PlayerUtil.Sound.loc(shooter, DIMINISH_AMMO, 0.2f), 5);
 
-        PlayerUtil.Sound.loc(shooter, this.fireSound, 0.2f);
+        Location eyeLoc = shooter.getEyeLocation();
+        Location fromLoc = eyeLoc.add(eyeLoc.getDirection().normalize().multiply(0.3));
 
-        bullet.fire(shooter, originLoc, originLoc.getDirection(), this);
+        bullet.fire(shooter, this, fromLoc);
         this.updateItem(gunItem);
 
         int cooldown = this.fireCooldown / 50;
         if(cooldown > 5) {
             shooter.setCooldown(Key.key(this.uuid), cooldown);
         }
+        PlayerUtil.Sound.loc(shooter, this.fireSound, 0.2f);
 
         return true;
     }
@@ -151,21 +148,13 @@ public abstract class GunImpl implements Gun {
     }
 
     @Override
-    public void hitEntity(@NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec) {
-        Location targetLoc = entity.getLocation();
-
+    public void hitEntity(@NotNull Player shooter, @NotNull LivingEntity hitEntity, @NotNull Vector hitVec) {
         PlayerUtil.Sound.player(shooter, GunImpl.HIT_MARKER, 0);
-        PlayerUtil.Sound.loc(targetLoc, GunImpl.HIT_ENTITY, 0);
     }
 
     @Override
     public @NotNull String getUUID() {
         return this.uuid;
-    }
-
-    @Override
-    public @NotNull GunType<?> getType() {
-        return this.gunType;
     }
 
     @Override
@@ -236,7 +225,7 @@ public abstract class GunImpl implements Gun {
     }
 
     @Override
-    public double getDamageMod() {
+    public float getDamageMod() {
         return this.damageMod;
     }
 
@@ -281,7 +270,7 @@ public abstract class GunImpl implements Gun {
         private StaticMagazineType<?> magazineType;
 
         private MagazineClass magazineClass;
-        private double damageMod;
+        private float damageMod;
         private double accuracyMod;
         private int fireCooldown;
 
@@ -294,7 +283,7 @@ public abstract class GunImpl implements Gun {
         public Factory() {
             this.uuid = UUID.randomUUID().toString();
             this.magazineClass = MagazineClass.PISTOL;
-            this.damageMod = 1.0;
+            this.damageMod = 1.0f;
             this.accuracyMod = 1;
             this.fireCooldown = 250;
             this.magazineType = null;
@@ -321,7 +310,7 @@ public abstract class GunImpl implements Gun {
             return this.self();
         }
 
-        public @NotNull T damageMod(double modifier) {
+        public @NotNull T damageMod(float modifier) {
             this.damageMod = Math.max(0, modifier);
             return this.self();
         }

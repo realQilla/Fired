@@ -15,7 +15,6 @@ import net.qilla.fired.weapon.magazine.MagazineRegistry;
 import net.qilla.fired.weapon.gun.implementation.Gun;
 import net.qilla.fired.weapon.gun.GunRegistry;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
-import net.qilla.fired.weapon.magazine.implementation.Magazine;
 import net.qilla.fired.weapon.magazine.implementation.MagazineDynamic;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -137,7 +136,7 @@ public final class FiredCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        final Gun gun = gunRegistry.createNew(selection);
+        final Gun gun = gunRegistry.create(selection);
 
         if(gun == null) {
             return Command.SINGLE_SUCCESS;
@@ -184,13 +183,13 @@ public final class FiredCommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        final Bullet mag = bulletRegistry.get(selection);
+        final Bullet bullet = bulletRegistry.get(selection);
 
-        if(mag == null) {
+        if(bullet == null) {
             return Command.SINGLE_SUCCESS;
         }
 
-        ItemStack itemStack = mag.getItem();
+        ItemStack itemStack = bullet.getItem();
         for(int i = 0; i < amount; i++) {
             itemStack.setAmount(itemStack.getMaxStackSize());
 

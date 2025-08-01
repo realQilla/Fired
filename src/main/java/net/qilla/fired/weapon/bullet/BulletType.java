@@ -2,9 +2,11 @@ package net.qilla.fired.weapon.bullet;
 
 import net.qilla.fired.Fired;
 import net.qilla.fired.weapon.bullet.implementation.*;
+import net.qilla.fired.weapon.gun.GunType;
+import net.qilla.fired.weapon.gun.implementation.Gun;
 import org.jetbrains.annotations.NotNull;
 
-public final class BulletType {
+public final class BulletType<T extends Bullet> {
 
     private static final Fired PLUGIN = Fired.getInstance();
 

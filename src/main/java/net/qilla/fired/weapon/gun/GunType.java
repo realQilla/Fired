@@ -13,45 +13,48 @@ public final class GunType<T extends Gun> {
 
     private static final Fired PLUGIN = Fired.getInstance();
 
-    // Assault Rifles
-    public static final GunType<Assault.Fenrir6> ASSAULT_FENRIR6 = register("a_fenrir6", Assault.Fenrir6::new);
-    public static final GunType<Assault.Lancia> ASSAULT_LANCIA = register("a_lancia", Assault.Lancia::new);
+    // Assault Rifle
+    public static final GunType<Assault.CTR9> ASSAULT_CTR9 = register("a_ctr9", Assault.CTR9::new);
+    public static final GunType<Assault.CR20> ASSAULT_CR20 = register("a_cr20", Assault.CR20::new);
 
-    // Machine Guns
-    public static final GunType<Machine.Minigun> MACHINE_MINIGUN = register("m_minigun", Machine.Minigun::new);
+    // Machine Gun
+    public static final GunType<Machine.MGX240> MACHINE_MGX240 = register("m_mgx240", Machine.MGX240::new);
 
-    // Pistols
-    public static final GunType<Pistol.PistolBrim44> PISTOL_BRIM44 = register("p_brim44", Pistol.PistolBrim44::new);
-    public static final GunType<Pistol.TalonMK2> PISTOL_TALONMK2 = register("p_talonmk2", Pistol.TalonMK2::new);
+    // Pistol
+    public static final GunType<Pistol.HM6> PISTOL_HM6 = register("p_hm6", Pistol.HM6::new);
+    public static final GunType<Pistol.CT11> PISTOL_CT11 = register("p_ct11", Pistol.CT11::new);
+    public static final GunType<Pistol.WR5> PISTOL_WR5 = register("p_wr5", Pistol.WR5::new);
 
-    // Heavy Rifles
-    public static final GunType<Heavy.Hadrian> HEAVY_HADRIAN = register("h_hadrian", Heavy.Hadrian::new);
+    // Heavy Rifle
+    public static final GunType<Heavy.MX3> HEAVY_hx3 = register("h_hx3", Heavy.MX3::new);
+    public static final GunType<Heavy.BR7> HEAVY_BR7 = register("h_br7", Heavy.BR7::new);
 
-    // Shot Guns
-    public static final GunType<Shotgun.Graveshot> SHOTGUN_GRAVESHOT = register("s_graveshot", Shotgun.Graveshot::new);
-    public static final GunType<Shotgun.ShotgunForge12> SHOTGUN_FORGE12 = register("s_forge12", Shotgun.ShotgunForge12::new);
-    public static final GunType<Shotgun.DoubleBarrel> SHOTGUN_DOUBLE_BARREL = register("s_double_barrel", Shotgun.DoubleBarrel::new);
-    public static final GunType<Shotgun.Pump> SHOTGUN_PUMP = register("s_pump", Shotgun.Pump::new);
+    // Shotgun
+    public static final GunType<Shotgun.MRK9> SHOTGUN_MRK9 = register("s_mrk9", Shotgun.MRK9::new);
+    public static final GunType<Shotgun.BR6> SHOTGUN_BR6 = register("s_br6", Shotgun.BR6::new);
+    public static final GunType<Shotgun.DB12> SHOTGUN_DB12 = register("s_db12", Shotgun.DB12::new);
+    public static final GunType<Shotgun.MK7P> SHOTGUN_MK7P = register("s_mk7p", Shotgun.MK7P::new);
+    public static final GunType<Shotgun.SL1> SHOTGUN_SL1 = register("s_sl1", Shotgun.SL1::new);
 
     private final GunType.GunFactory<T> factory;
 
-    private GunType(@NotNull GunType.GunFactory<T> factory) {
+    private GunType(@NotNull GunFactory<T> factory) {
         this.factory = factory;
     }
 
-    public @NotNull T createNew() {
-        T gun = this.factory.create(this);
+    public @NotNull T create() {
+        T gun = this.factory.create();
         LiveGunRegistry liveRegistry = PLUGIN.getLiveGunReg();
 
         return liveRegistry.register(gun);
     }
 
-    private static <T extends Gun> @NotNull GunType<T> register(String id, GunType.GunFactory<T> factory) {
+    private static <T extends Gun> @NotNull GunType<T> register(String id, GunFactory<T> factory) {
         return PLUGIN.getGunReg().register(id, new GunType<>(factory));
     }
 
     @FunctionalInterface
     public interface GunFactory<T extends Gun> {
-        @NotNull T create(@NotNull GunType<?> gunType);
+        @NotNull T create();
     }
 }

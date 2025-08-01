@@ -22,7 +22,7 @@ public interface Gun {
 
     boolean preFire(@NotNull Player holder, @NotNull ItemStack gunItem);
 
-    boolean fire(@NotNull Player holder, @NotNull Location loc, @NotNull ItemStack gunItem);
+    boolean fire(@NotNull Player holder, @NotNull ItemStack gunItem);
 
     void hitBlock(@NotNull Player shooter, @NotNull Block block, @NotNull Vector hitVec);
 
@@ -44,11 +44,9 @@ public interface Gun {
 
     void updateItem(@NotNull ItemStack item);
 
-    @NotNull GunType<?> getType();
-
     @NotNull MagazineClass getMagazineClass();
 
-    double getDamageMod();
+    float getDamageMod();
 
     double getAccuracyMod();
 

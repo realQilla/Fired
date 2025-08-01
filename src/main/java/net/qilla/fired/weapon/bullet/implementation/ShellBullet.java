@@ -11,7 +11,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ShellBullet extends BulletImpl {
@@ -24,9 +23,9 @@ public abstract class ShellBullet extends BulletImpl {
     }
 
     @Override
-    public void fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull Vector originDir, @NotNull Gun gun) {
+    public void fire(@NotNull Player shooter, @NotNull Gun gun, @NotNull Location originLoc) {
         for(int i = 0; i < this.pelletCount; i++) {
-            super.fire(shooter, originLoc, originDir, gun);
+            super.fire(shooter, gun, originLoc);
         }
     }
 
@@ -63,7 +62,7 @@ public abstract class ShellBullet extends BulletImpl {
                     .itemStack(QStack.ofClean(Material.ARMADILLO_SCUTE))
                     .trailParticle(QParticle.of(Particle.ENCHANTED_HIT))
                     .bulletClass(BulletClass.SHELL)
-                    .damage(24.0f)
+                    .damage(28.0f)
                     .range(96)
                     .bulletSpread(2.0)
                     .bleed(4.0f)

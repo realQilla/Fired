@@ -2,7 +2,6 @@ package net.qilla.fired.weapon.gun;
 
 import com.google.common.base.Preconditions;
 import net.qilla.fired.weapon.gun.implementation.Gun;
-import net.qilla.fired.weapon.gun.implementation.GunImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
@@ -16,16 +15,16 @@ public final class GunRegistry {
     private GunRegistry() {
     }
 
-    public @Nullable Gun createNew(@NotNull String id) {
+    public @Nullable Gun create(@NotNull String id) {
         Preconditions.checkNotNull(id, "ID cannot be null!");
         if(!this.registry.containsKey(id)) return null;
 
         GunType<?> gunType = this.registry.get(id);
 
-        return gunType.createNew();
+        return gunType.create();
     }
 
-    public @Nullable GunType<?> getType(@NotNull String id) {
+    public @Nullable GunType<?> get(@NotNull String id) {
         return this.registry.get(id);
     }
 

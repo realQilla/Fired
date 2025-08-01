@@ -25,8 +25,8 @@ public abstract class WindImpl extends AutomaticImpl {
     private final AtomicBoolean isSpinning = new AtomicBoolean(false);
     private long spinUp = 0;
 
-    public WindImpl(@NotNull GunType<?> gunType, @NotNull Factory<?> factory) {
-        super(gunType, factory);
+    public WindImpl(@NotNull Factory<?> factory) {
+        super(factory);
     }
 
     @Override
@@ -38,11 +38,11 @@ public abstract class WindImpl extends AutomaticImpl {
 
         if(this.isSpinning.get()) return false;
 
-        return this.fire(holder, holder.getEyeLocation(), gunItem);
+        return this.fire(holder, gunItem);
     }
 
     @Override
-    public boolean fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull ItemStack gunItem) {
+    public boolean fire(@NotNull Player shooter, @NotNull ItemStack gunItem) {
         WindImpl.this.isSpinning.set(true);
 
         new QRunnable(new QTask() {
@@ -60,7 +60,7 @@ public abstract class WindImpl extends AutomaticImpl {
                 }
 
                 if((WindImpl.this.spinUp >= MAX_WIND) && !WindImpl.super.isAutoEngaged()) {
-                    WindImpl.super.fire(shooter, shooter.getEyeLocation(), gunItem);
+                    WindImpl.super.fire(shooter, gunItem);
                 }
             }
         }, null, onComplete -> {

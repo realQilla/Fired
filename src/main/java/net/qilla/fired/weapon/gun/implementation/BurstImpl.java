@@ -1,11 +1,9 @@
 package net.qilla.fired.weapon.gun.implementation;
 
-import net.qilla.fired.weapon.gun.GunType;
 import net.qilla.fired.weapon.visualstats.StatHolder;
 import net.qilla.fired.weapon.visualstats.GunStat;
 import net.qilla.qlibrary.util.tools.QRunnable;
 import net.qilla.qlibrary.util.tools.QTask;
-import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -19,21 +17,21 @@ public abstract class BurstImpl extends GunImpl {
     private final int burstCount;
     private final long burstInterval;
 
-    public BurstImpl(@NotNull GunType<?> gunType, @NotNull BurstImpl.Factory factory) {
-        super(gunType, factory);
+    public BurstImpl(@NotNull BurstImpl.Factory factory) {
+        super(factory);
 
         this.burstCount = factory.burstCount;
         this.burstInterval = factory.burstInterval;
     }
 
     @Override
-    public boolean fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull ItemStack gunItem) {
-        if(this.burstCount <= 1) return super.fire(shooter, originLoc, gunItem);
+    public boolean fire(@NotNull Player shooter, @NotNull ItemStack gunItem) {
+        if(this.burstCount <= 1) return super.fire(shooter, gunItem);
         else {
             new QRunnable(new QTask() {
                 @Override
                 public void run() {
-                    if(!BurstImpl.super.fire(shooter, shooter.getEyeLocation(), gunItem)) cancel();
+                    if(!BurstImpl.super.fire(shooter, gunItem)) cancel();
                 }
             }, this.burstCount).runSync(super.getPlugin(), Executors.newSingleThreadScheduledExecutor(), 0, this.burstInterval, TimeUnit.MILLISECONDS);
         }
@@ -51,8 +49,8 @@ public abstract class BurstImpl extends GunImpl {
     }
 
     @Override
-    public void hitEntity(@NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec) {
-        super.hitEntity(shooter, entity, hitVec);
+    public void hitEntity(@NotNull Player shooter, @NotNull LivingEntity hitEntity, @NotNull Vector hitVec) {
+        super.hitEntity(shooter, hitEntity, hitVec);
     }
 
     public int getBurstCount() {

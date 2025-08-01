@@ -7,11 +7,12 @@ import org.jetbrains.annotations.NotNull;
 public enum Rarity {
     COMMON_I(MiniMessage.miniMessage().deserialize("<!italic><dark_gray><bold>COMMON I")),
     COMMON_II(MiniMessage.miniMessage().deserialize("<!italic><gray><bold>COMMON II")),
-    COMMON_III(MiniMessage.miniMessage().deserialize("<!italic><white><bold>COMMON III")),
+    RARITY(MiniMessage.miniMessage().deserialize("<!italic><white><bold>COMMON III")),
     RARE_I(MiniMessage.miniMessage().deserialize("<!italic><dark_aqua><bold>RARE I")),
     RARE_II(MiniMessage.miniMessage().deserialize("<!italic><blue><bold>RARE II")),
     RARE_III(MiniMessage.miniMessage().deserialize("<!italic><dark_purple><bold>RARE III")),
-    LEGENDARY(MiniMessage.miniMessage().deserialize("<!italic><gold><bold>LEGENDARY"));
+    LEGENDARY(MiniMessage.miniMessage().deserialize("<!italic><gold><bold>LEGENDARY")),
+    DEV(MiniMessage.miniMessage().deserialize("<!italic><red><bold>DEV"));
 
     private final Component display;
 

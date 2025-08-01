@@ -7,6 +7,7 @@ import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.bullet.BulletRegistry;
+import net.qilla.fired.weapon.bullet.BulletType;
 import net.qilla.fired.weapon.magazine.MagazineClass;
 import net.qilla.fired.weapon.bullet.implementation.Bullet;
 import net.qilla.qlibrary.util.QSound;
@@ -36,7 +37,6 @@ public abstract class MagazineImpl implements Magazine {
     private final long reloadSpeed;
     private final Queue<Bullet> queuedBullets;
     private final Deque<Bullet> loadedBullets;
-    private boolean locked;
 
     public MagazineImpl(@NotNull String uuid, @NotNull MagazineImpl.Factory<?> factory) {
         Preconditions.checkNotNull(uuid, "UUID cannot be null.");
@@ -46,7 +46,7 @@ public abstract class MagazineImpl implements Magazine {
         this.bulletClass = factory.bulletClass;
         this.capacity = factory.capacity;
         this.reloadSpeed = factory.reloadSpeed;
-        this.loadedBullets = factory.bullets;
+        this.loadedBullets = new LinkedList<>(factory.loadedBullets);
         this.queuedBullets = new LinkedList<>();
     }
 
@@ -187,14 +187,14 @@ public abstract class MagazineImpl implements Magazine {
         private BulletClass bulletClass;
         private int capacity;
         private long reloadSpeed;
-        private Deque<Bullet> bullets;
+        private Deque<Bullet> loadedBullets;
 
         public Factory() {
             this.magazineClass = MagazineClass.PISTOL;
             this.bulletClass = BulletClass.PISTOL;
             this.capacity = 20;
             this.reloadSpeed = 100;
-            this.bullets = new LinkedList<>();
+            this.loadedBullets = new LinkedList<>();
         }
 
         public @NotNull T magazineClass(@NotNull MagazineClass magazineClass) {
@@ -220,10 +220,10 @@ public abstract class MagazineImpl implements Magazine {
             return this.self();
         }
 
-        public @NotNull T bullets(@NotNull List<Bullet> bullets) {
+        public @NotNull T loadedBullets(@NotNull List<Bullet> bullets) {
             Preconditions.checkNotNull(bullets, "Bullets cannot be null.");
 
-            this.bullets = new LinkedList<>(bullets.subList(0, Math.min(bullets.size(), this.capacity)));
+            this.loadedBullets = new LinkedList<>(bullets.subList(0, Math.min(bullets.size(), this.capacity)));
             return this.self();
         }
 

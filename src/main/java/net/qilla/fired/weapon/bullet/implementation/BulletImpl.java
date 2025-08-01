@@ -7,13 +7,10 @@ import io.papermc.paper.raytracing.RayTraceTarget;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.qilla.fired.Fired;
 import net.qilla.fired.misc.NKey;
+import net.qilla.fired.weapon.bullet.ActiveBullet;
 import net.qilla.fired.weapon.bullet.BulletClass;
 import net.qilla.fired.weapon.gun.implementation.Gun;
 import net.qilla.fired.weapon.visualstats.BulletStat;
@@ -36,6 +33,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -45,20 +43,26 @@ public abstract class BulletImpl implements Bullet {
 
     private static final Fired PLUGIN = Fired.getInstance();
     private static final Random RANDOM = new java.util.Random();
-    protected static final Predicate<Block> BLOCK_FILTER = block -> {
+    static final Predicate<Block> BLOCK_FILTER = block -> {
+        if(block == null) return false;
         if(block.isPassable()) return false;
-        if(block.getType().getBlastResistance() <= 1) return false;
+        if(block.getType().getBlastResistance() <= 3) return false;
+        return true;
+    };
+    static final Predicate<Entity> ENTITY_FILTER = entity -> {
+        if(!(entity instanceof LivingEntity)) return false;
+        if(entity.isInvulnerable()) return false;
+        if(entity instanceof Player player && player.getGameMode().isInvulnerable()) return false;
         return true;
     };
 
     private final String id;
     private final BulletClass bulletClass;
-    private final int range;
     private final double bulletSpread;
+    private final double range;
     private final float damage;
     private final float bleed;
     private final float scale;
-
     private final Component name;
     private final List<Component> description;
     private final ItemStack itemStack;
@@ -67,12 +71,11 @@ public abstract class BulletImpl implements Bullet {
     public BulletImpl(@NotNull String id, @NotNull Factory<?> factory) {
         this.id = id;
         this.bulletClass = factory.bulletClass;
-        this.range = factory.range;
         this.bulletSpread = factory.bulletSpread;
+        this.range = factory.range;
         this.damage = factory.damage;
         this.bleed = factory.bleed;
         this.scale = factory.scale;
-
         this.name = factory.name;
         this.description = factory.description;
         this.itemStack = factory.itemStack;
@@ -80,31 +83,53 @@ public abstract class BulletImpl implements Bullet {
     }
 
     @Override
-    public void fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull Vector originDir, @NotNull Gun gun) {
-        Vector dir = this.calcAimCone(originDir, this.bulletSpread * gun.getAccuracyMod());
-        RayTraceResult result = originLoc.getWorld().rayTrace(builder -> builder
+    public void fire(@NotNull Player shooter, @NotNull Gun gun, @NotNull Location originLoc) {
+        Location fireLoc = originLoc.clone();
+        Vector direction = this.applyBulletSpread(originLoc.getDirection(), this.bulletSpread * gun.getAccuracyMod());
+        ActiveBullet activeBullet = new ActiveBullet(shooter, gun, this);
+
+        while(activeBullet.range() > 0) {
+            RayTraceResult result = this.rayTraceBlocks(fireLoc, direction, activeBullet);
+
+            if(result != null) {
+                Vector hitLoc = result.getHitPosition();
+                LivingEntity entity = (LivingEntity) result.getHitEntity();
+                Block block = result.getHitBlock();
+                fireLoc = hitLoc.toLocation(fireLoc.getWorld());
+
+                this.fireParticle(originLoc.toVector(), hitLoc, originLoc.getWorld());
+                if(block != null) {
+                    this.hitBlock(shooter, gun, block, hitLoc);
+                    if(!BLOCK_FILTER.test(block)) activeBullet.impact(block);
+                    else break;
+                }
+                if(entity != null) {
+                    this.hitEntity(shooter, gun, activeBullet, entity,hitLoc);
+                    activeBullet.impact(entity);
+                }
+
+                activeBullet.fireDistance(hitLoc.clone().subtract(originLoc.toVector()).length());
+            } else {
+                this.fireParticle(originLoc, direction, originLoc.getWorld());
+                break;
+            }
+        }
+    }
+
+    private @Nullable RayTraceResult rayTraceBlocks(@NotNull Location originLoc, @NotNull Vector direction, @NotNull ActiveBullet activeBullet) {
+        return originLoc.getWorld().rayTrace(builder -> builder
                 .start(originLoc)
-                .direction(dir)
+                .direction(direction)
                 .raySize(this.scale)
                 .maxDistance(this.range)
                 .targets(RayTraceTarget.ENTITY, RayTraceTarget.BLOCK)
                 .fluidCollisionMode(FluidCollisionMode.NEVER)
-                .blockFilter(BLOCK_FILTER)
-                .entityFilter(entity -> entity instanceof LivingEntity && !entity.equals(shooter))
+                .blockFilter(block -> !activeBullet.ignoreBlocks().contains(block.hashCode()))
+                .entityFilter(entity -> !activeBullet.ignoreEntities().contains(entity.getUniqueId()) && ENTITY_FILTER.test(entity))
         );
-
-        if(result != null) {
-            Vector hitLoc = result.getHitPosition();
-            Entity entity = result.getHitEntity();
-            Block block = result.getHitBlock();
-
-            if(entity != null) this.hitEntity(gun, shooter, (LivingEntity) entity, hitLoc);
-            if(block != null) this.hitBlock(gun, shooter, block, hitLoc);
-        }
-        this.fireParticle(originLoc, dir);
     }
 
-    public @NotNull Vector calcAimCone(@NotNull Vector originDir, double degrees) {
+    private @NotNull Vector applyBulletSpread(@NotNull Vector originDir, double degrees) {
         double theta = RANDOM.nextDouble() * 2 * Math.PI;
         double phi = Math.acos(1 - RANDOM.nextDouble() * (1 - Math.cos(Math.toRadians(degrees))));
 
@@ -122,24 +147,45 @@ public abstract class BulletImpl implements Bullet {
                 .add(perpendicular2.multiply(sinPhi * Math.sin(theta))).normalize();
     }
 
+    private void fireParticle(@NotNull Location startLoc, @NotNull Vector dir, World world) {
+        Location newLoc = startLoc.toLocation(world);
+
+        for(float distance = 2; distance <= this.range - 2; distance += RANDOM.nextFloat(1.75f, 2.5f)) {
+            Vector pointVec = dir.clone().multiply(distance);
+            Location curPos = newLoc.clone().add(pointVec);
+            PlayerUtil.particle(curPos, this.trailParticle);
+        }
+    }
+
+    private void fireParticle(@NotNull Vector startLoc, @NotNull Vector endLoc, @NotNull World world) {
+        Location newLoc = startLoc.toLocation(world);
+        Vector direction = endLoc.clone().subtract(startLoc);
+        double totalDistance = direction.length();
+
+        direction.normalize();
+
+        for(float distance = 2; distance < totalDistance; distance += RANDOM.nextFloat(1.75f, 2.5f)) {
+            Vector pointVec = direction.clone().multiply(distance);
+            Location curPos = newLoc.clone().add(pointVec);
+            PlayerUtil.particle(curPos, this.trailParticle);
+        }
+    }
+
     @Override
-    public void hitEntity(@NotNull Gun gun, @NotNull Player shooter, @NotNull LivingEntity entity, @NotNull Vector hitVec) {
+    public void hitEntity(@NotNull Player shooter, @NotNull Gun gun, @NotNull ActiveBullet activeBullet, @NotNull LivingEntity entity, @NotNull Vector hitVec) {
         DamageSource source = DamageSource.builder(DamageType.GENERIC)
                 .withDirectEntity(shooter)
                 .withDamageLocation(shooter.getEyeLocation())
                 .build();
 
-
-        System.out.println("Hit " + entity.getName() + " for " + this.getDamage() * gun.getDamageMod() + " damage.");
-        entity.damage(this.getDamage() * gun.getDamageMod(), source);
-        PLUGIN.getEntityDataReg().getOrCreate(entity).bleedEntity(this.bleed);
+        entity.damage(activeBullet.damage(), source);
+        PLUGIN.getEntityDataReg().getOrCreate(entity).bleedEntity(activeBullet.bleed());
         entity.setNoDamageTicks(0);
-        this.hitParticle(hitVec, entity.getWorld());
         gun.hitEntity(shooter, entity, hitVec);
     }
 
     @Override
-    public void hitBlock(@NotNull Gun gun, @NotNull Player shooter, @NotNull Block block, @NotNull Vector hitVec) {
+    public void hitBlock(@NotNull Player shooter, @NotNull Gun gun, @NotNull Block block, @NotNull Vector hitVec) {
         Location hitLoc = hitVec.toLocation(block.getWorld());
         CraftWorld craftWorld = (CraftWorld) block.getWorld();
         BlockPos blockPos = new BlockPos(block.getX(), block.getY(), block.getZ());
@@ -149,30 +195,6 @@ public abstract class BulletImpl implements Bullet {
         PlayerUtil.particle(hitLoc, QParticle.of(block.getType(), 8, 0.15f));
         PlayerUtil.Sound.loc(hitLoc, QSound.of(block.getBlockSoundGroup().getBreakSound(), 1, 0.5f, SoundCategory.BLOCKS), 0.2f);
         gun.hitBlock(shooter, block, hitVec);
-    }
-
-    private void fireParticle(@NotNull Location loc, @NotNull Vector dir) {
-        Location newLoc = loc.clone();
-
-        for(float i = 0; i <= this.range; i+= RANDOM.nextFloat(1.75f, 2.5f)) {
-            Vector vec = dir.clone().multiply(i);
-            Location curPos = newLoc.clone().add(vec);
-            if(BLOCK_FILTER.test(curPos.getBlock())) break;
-            PlayerUtil.particle(curPos, this.trailParticle);
-        }
-    }
-
-    private void hitParticle(@NotNull Vector hitVec, @NotNull World world) {
-        Vector newVec = hitVec.clone();
-        Location newLoc = newVec.toLocation(world).add(0, 2, 0);
-
-        Level level = ((CraftWorld) world).getHandle();
-
-        for(int i = 0; i < 100; i++) {
-            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.LAPIS_BLOCK.defaultBlockState()), newLoc.x(), newLoc.y(), newLoc.z(), 0, 10, 0);
-        }
-
-        //world.spawnParticle(Particle.BLOCK, newLoc, 100, 0, 1, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
     }
 
     @Override
@@ -186,7 +208,7 @@ public abstract class BulletImpl implements Bullet {
     }
 
     @Override
-    public int getRange() {
+    public double getRange() {
         return this.range;
     }
 
@@ -263,8 +285,8 @@ public abstract class BulletImpl implements Bullet {
     public static class Factory<T extends BulletImpl.Factory<T>> {
 
         private BulletClass bulletClass;
-        private int range;
         private double bulletSpread;
+        private double range;
         private float damage;
         private float bleed;
         private float scale;
@@ -294,13 +316,13 @@ public abstract class BulletImpl implements Bullet {
             return this.self();
         }
 
-        public @NotNull T range(int range) {
-            this.range = Math.max(0, range);
+        public @NotNull T bulletSpread(double spread) {
+            this.bulletSpread = Math.max(0, spread);
             return this.self();
         }
 
-        public @NotNull T bulletSpread(double spread) {
-            this.bulletSpread = Math.max(0, spread);
+        public @NotNull T range(int range) {
+            this.range = Math.max(0, range);
             return this.self();
         }
 

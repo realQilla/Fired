@@ -50,16 +50,16 @@ public abstract class BulletStat<T extends Number> extends StatDisplay<T> {
         }
     }
 
-    public static class Range extends StatDisplay<Integer> {
+    public static class Range extends StatDisplay<Double> {
 
         private static final String ID = "range";
         private static final String DISPLAY = "<!italic><white><yellow>☀</yellow> Range: <yellow>%value%</yellow>";
 
-        private Range(int value) {
+        private Range(double value) {
             super(value, DISPLAY);
         }
 
-        public static @NotNull Range of(int value) {
+        public static @NotNull Range of(double value) {
             return new Range(value);
         }
 

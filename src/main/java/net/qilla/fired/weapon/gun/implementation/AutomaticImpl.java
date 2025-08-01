@@ -1,9 +1,7 @@
 package net.qilla.fired.weapon.gun.implementation;
 
-import net.qilla.fired.weapon.gun.GunType;
 import net.qilla.qlibrary.util.tools.QRunnable;
 import net.qilla.qlibrary.util.tools.QTask;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +14,8 @@ public abstract class AutomaticImpl extends GunImpl {
     private final AtomicBoolean autoEngaged = new AtomicBoolean(false);
     private long lastInput = 0;
 
-    public AutomaticImpl(@NotNull GunType<?> gunType, @NotNull Factory<?> factory) {
-        super(gunType, factory);
+    public AutomaticImpl(@NotNull Factory<?> factory) {
+        super(factory);
     }
 
     @Override
@@ -30,7 +28,7 @@ public abstract class AutomaticImpl extends GunImpl {
     }
 
     @Override
-    public boolean fire(@NotNull Player shooter, @NotNull Location originLoc, @NotNull ItemStack gunItem) {
+    public boolean fire(@NotNull Player shooter, @NotNull ItemStack gunItem) {
         AutomaticImpl.this.autoEngaged.set(true);
 
         new QRunnable(new QTask() {
@@ -42,7 +40,7 @@ public abstract class AutomaticImpl extends GunImpl {
                     return;
                 }
 
-                if(!AutomaticImpl.super.fire(shooter, shooter.getEyeLocation(), gunItem)) {
+                if(!AutomaticImpl.super.fire(shooter, gunItem)) {
                     cancel();
                 }
             }

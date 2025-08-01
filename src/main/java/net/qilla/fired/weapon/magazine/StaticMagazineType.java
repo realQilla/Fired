@@ -6,13 +6,17 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StaticMagazineType<T extends MagazineStatic> {
 
-    // Shotgun Magazines
-    public static final StaticMagazineType<ShellMagazine.DoubleBarrel> DOUBLE_BARREL = of(ShellMagazine.DoubleBarrel::new);
-    public static final StaticMagazineType<ShellMagazine.Pump> PUMP = of(ShellMagazine.Pump::new);
+    // Shotgun
+    public static final StaticMagazineType<ShellMagazine.DB12> SHOTGUN_DB12 = of(ShellMagazine.DB12::new);
+    public static final StaticMagazineType<ShellMagazine.MK7P> SHOTGUN_MK7P = of(ShellMagazine.MK7P::new);
+    public static final StaticMagazineType<ShellMagazine.SL1> SHOTGUN_SL1 = of(ShellMagazine.SL1::new);
 
-    // Heavy Magazines
+    // Pistol
+    public static final StaticMagazineType<PistolMagazine.HM6> PISTOL_HM6 = of(PistolMagazine.HM6::new);
+    public static final StaticMagazineType<PistolMagazine.WR5> PISTOL_WR5 = of(PistolMagazine.WR5::new);
 
-    public static final StaticMagazineType<HeavyMagazine.Static8> HEAVY_8 = of(HeavyMagazine.Static8::new);
+    // Heavy
+    public static final StaticMagazineType<HeavyMagazine.BR7> HEAVY_BR7 = of(HeavyMagazine.BR7::new);
 
     private final MagazineFactory<T> factory;
 
@@ -30,6 +34,6 @@ public final class StaticMagazineType<T extends MagazineStatic> {
 
     @FunctionalInterface
     public interface MagazineFactory<T extends MagazineStatic> {
-        @NotNull T create(Gun gun);
+        @NotNull T create(@NotNull Gun gun);
     }
 }
